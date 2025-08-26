@@ -1,10 +1,19 @@
+import { RouterProvider } from "react-router-dom"
+import { router } from "./router"
+import { Provider } from "react-redux"
+import { store } from "./reducers/auth/store"
+import { Toaster } from "sonner"
+
 
 
 function App() {
 
   return (
     <>
-    <h1 className="text-red-400 flex items-center justify-center min-h-screen ">hello world</h1>
+    <Provider store={store}>
+      <Toaster position="top-center" richColors closeButton duration={2500}/>
+    <RouterProvider router={router}/>
+    </Provider>
     </>
   )
 }

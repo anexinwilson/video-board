@@ -3,11 +3,18 @@ import connectDB from "./config/db";
 import dotenv from "dotenv";
 import routes from "./route/index";
 import passportJwtStrategy from "./config/passportJwtStrategy";
+import cors from "cors";
 
 const app = express();
 
 dotenv.config();
 connectDB();
+
+const corsOptions = {
+  origin: ["http://localhost:5173"],
+};
+
+app.use(cors(corsOptions));
 
 app.use(passportJwtStrategy.initialize());
 
