@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import SideBar from "../../components/SideBar";
-import { useSelector } from "react-redux";
-import { selectLoggedInUser, type AuthResponse } from "../../reducers/auth/authReducer";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectLoggedInUser,
+  updateUser,
+  type AuthResponse,
+} from "../../reducers/auth/authReducer";
 import { toast } from "sonner";
 import backendApi from "../../api/backendApi";
 
@@ -10,6 +14,7 @@ const UserProfile = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [edit, setEdit] = useState(false);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (loggedInUser?.name) {
@@ -24,7 +29,7 @@ const UserProfile = () => {
     setEdit((prev) => !prev);
   };
 
-  const token = localStorage.getItem("token")
+  const token = localStorage.getItem("token");
 
   const handleSaveClick = async () => {
     try {
@@ -37,12 +42,13 @@ const UserProfile = () => {
           },
         }
       );
-      if(data.success) {
-        toast.success(data.message)
+      if (data.success) {
+        toast.success(data.message);
+        dispatch(updateUser({ email, name }));
+        setEdit(false)
       } else {
-        toast.warning(data.message)
+        toast.warning(data.message);
       }
-
     } catch (error) {
       toast.error("Internal server error");
     }
@@ -102,7 +108,7 @@ const UserProfile = () => {
               <button
                 type="button"
                 onClick={() => (edit ? handleSaveClick() : handleEditClick())}
-                className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg transition-colors font-medium"
+                className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg transition-colors font-medium cursor-pointer"
               >
                 {edit ? "Save" : "Edit"}
               </button>

@@ -29,7 +29,7 @@ interface SignUpPayload {
   password: string;
 }
 
-interface AuthResponse {
+export interface AuthResponse {
   success: boolean;
   message: string;
   user?: User;
@@ -127,11 +127,18 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    logOutUser:(state) => {
-      localStorage.removeItem("token")
-      state.loggedInUser = null
-      toast.info("We will miss you")
-    }
+    logOutUser: (state) => {
+      localStorage.removeItem("token");
+      state.loggedInUser = null;
+      toast.info("We will miss you");
+    },
+    updateUser: (state, action) => {
+      const { name, email } = action.payload;
+      if (state.loggedInUser) {
+        state.loggedInUser.name = name;
+        state.loggedInUser.email = email;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -158,6 +165,6 @@ const authSlice = createSlice({
 });
 
 export const authReducer = authSlice.reducer;
-export const {logOutUser} = authSlice.actions
+export const { logOutUser,updateUser } = authSlice.actions;
 export const selectLoggedInUser = (state: RootState) => state.auth.loggedInUser;
 export const selectLoading = (state: RootState) => state.auth.loading;
