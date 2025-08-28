@@ -10,23 +10,22 @@ import {
   FaVideo,
 } from "react-icons/fa";
 import { IoIosLogOut } from "react-icons/io";
-import { fetchUserDetails } from "../reducers/auth/authReducer";
+import { fetchUserDetails, logOutUser } from "../reducers/auth/authReducer";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../reducers/auth/store";
 
 const SideBar = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>()
-  
+  const dispatch = useDispatch<AppDispatch>();
+
   const toggleSidebar = () => {
     setIsOpen((prev) => !prev);
   };
 
   useEffect(() => {
-    dispatch(fetchUserDetails())
-  },[])
-
+    dispatch(fetchUserDetails());
+  }, []);
 
   return (
     <>
@@ -34,7 +33,7 @@ const SideBar = () => {
         className={`fixed top-0 left-0 z-40 w-64 h-screen bg-black text-white lg:bg-bgOne lg:text-textOne shadow-lg transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
-        <div className="p-4  text-2xl font-semibold border-b border-gray-300 hidden md:block">
+        <div className="p-4 text-2xl font-semibold border-b border-gray-300 hidden md:block">
           VideoBoard
         </div>
         <nav className="mt-10 md:mt-7">
@@ -42,7 +41,7 @@ const SideBar = () => {
             <li>
               <NavLink
                 to="/"
-                className="flex items-center p-3 hover:bg-bgTwo hover:text-gray-900 rounded-md"
+                className="flex items-center p-3 hover:bg-gray-200 hover:text-black rounded-md transition-colors duration-200"
                 onClick={toggleSidebar}
               >
                 <FaHome size={20} className="mr-3" />
@@ -52,7 +51,7 @@ const SideBar = () => {
             <li>
               <NavLink
                 to="/user/dashboard"
-                className="flex items-center p-3 hover:bg-bgTwo hover:text-gray-900 rounded-md"
+                className="flex items-center p-3 hover:bg-gray-200 hover:text-black rounded-md transition-colors duration-200"
                 onClick={toggleSidebar}
               >
                 <FaUser className="mr-3" />
@@ -62,7 +61,7 @@ const SideBar = () => {
             <li>
               <NavLink
                 to="/user/upload-video"
-                className="flex items-center p-3 hover:bg-bgTwo hover:text-gray-900 rounded-md"
+                className="flex items-center p-3 hover:bg-gray-200 hover:text-black rounded-md transition-colors duration-200"
                 onClick={toggleSidebar}
               >
                 <FaUpload className="mr-3" />
@@ -72,7 +71,7 @@ const SideBar = () => {
             <li>
               <NavLink
                 to="/user/edit/my-videos"
-                className="flex items-center p-3 hover:bg-bgTwo hover:text-gray-900 rounded-md"
+                className="flex items-center p-3 hover:bg-gray-200 hover:text-black rounded-md transition-colors duration-200"
                 onClick={toggleSidebar}
               >
                 <FaVideo className="mr-3" />
@@ -82,7 +81,7 @@ const SideBar = () => {
             <li>
               <NavLink
                 to="/user/profile"
-                className="flex items-center p-3 hover:bg-bgTwo hover:text-gray-900 rounded-md"
+                className="flex items-center p-3 hover:bg-gray-200 hover:text-black rounded-md transition-colors duration-200"
                 onClick={toggleSidebar}
               >
                 <FaCog className="mr-3" />
@@ -91,8 +90,11 @@ const SideBar = () => {
             </li>
             <li>
               <div
-                className="flex items-center p-3 hover:bg-bgTwo hover:text-gray-900 rounded-md cursor-pointer"
-                
+                className="flex items-center p-3 hover:bg-gray-200 hover:text-black rounded-md cursor-pointer transition-colors duration-200"
+                onClick={() => {
+                  dispatch(logOutUser());
+                  navigate("/sign-in");
+                }}
               >
                 <IoIosLogOut size={20} className="mr-3" />
                 <span>Log out</span>
@@ -110,8 +112,8 @@ const SideBar = () => {
           {isOpen ? <FaTimes /> : <FaBars />}
         </button>
 
-        <div className=" w-full flex items-center justify-center ">
-          <NavLink to="/" className="text-lg font-semibold ">
+        <div className="w-full flex items-center justify-center">
+          <NavLink to="/" className="text-lg font-semibold">
             VideoBoard
           </NavLink>
         </div>

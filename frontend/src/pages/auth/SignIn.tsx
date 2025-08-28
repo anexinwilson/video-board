@@ -83,14 +83,14 @@ const SignIn = () => {
             disabled = {loading}
               type="submit"
               className="w-full py-3 px-4 bg-sky-400 text-white font-bold rounded-md shadow-md transition duration-300
-               disabled:bg-green-300 disabled:cursor-not-allowed flex items-center justify-center cursor: pointer "
+               disabled:bg-green-300 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer "
             >
               {loading ? "Verifying ..." : "Sign In"}
             </button>
           </form>
           <Link
             to="/sign-up"
-            className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-all duration-300"
+            className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-all duration-300 cursor-pointer"
           >
             Sign Up
           </Link>

@@ -1,22 +1,52 @@
 import React, { useEffect, useState } from "react";
 import SideBar from "../../components/SideBar";
 import { useSelector } from "react-redux";
-import { selectLoggedInUser } from "../../reducers/auth/authReducer";
+import { selectLoggedInUser, type AuthResponse } from "../../reducers/auth/authReducer";
+import { toast } from "sonner";
+import backendApi from "../../api/backendApi";
 
 const UserProfile = () => {
-  const loggedInUser = useSelector(selectLoggedInUser)
+  const loggedInUser = useSelector(selectLoggedInUser);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [edit, setEdit] = useState(false);
 
   useEffect(() => {
-    if(loggedInUser?.name) {
-      setName(loggedInUser.name)
+    if (loggedInUser?.name) {
+      setName(loggedInUser.name);
     }
-    if(loggedInUser?.email) {
-      setEmail(loggedInUser.email)
+    if (loggedInUser?.email) {
+      setEmail(loggedInUser.email);
     }
-  },[])
+  }, [loggedInUser]);
+
+  const handleEditClick = () => {
+    setEdit((prev) => !prev);
+  };
+
+  const token = localStorage.getItem("token")
+
+  const handleSaveClick = async () => {
+    try {
+      const { data } = await backendApi.post<AuthResponse>(
+        "/api/v1/user/update",
+        { name, email },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if(data.success) {
+        toast.success(data.message)
+      } else {
+        toast.warning(data.message)
+      }
+
+    } catch (error) {
+      toast.error("Internal server error");
+    }
+  };
 
   return (
     <div className="flex w-full pr-2 h-screen">
@@ -71,7 +101,7 @@ const UserProfile = () => {
             <div className="flex justify-end mt-4">
               <button
                 type="button"
-                onClick={() => setEdit(true)}
+                onClick={() => (edit ? handleSaveClick() : handleEditClick())}
                 className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg transition-colors font-medium"
               >
                 {edit ? "Save" : "Edit"}

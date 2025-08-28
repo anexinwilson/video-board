@@ -126,7 +126,13 @@ export const fetchUserDetails = createAsyncThunk<
 const authSlice = createSlice({
   name: "auth",
   initialState,
-  reducers: {},
+  reducers: {
+    logOutUser:(state) => {
+      localStorage.removeItem("token")
+      state.loggedInUser = null
+      toast.info("We will miss you")
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(signInUser.pending, (state) => {
@@ -152,5 +158,6 @@ const authSlice = createSlice({
 });
 
 export const authReducer = authSlice.reducer;
+export const {logOutUser} = authSlice.actions
 export const selectLoggedInUser = (state: RootState) => state.auth.loggedInUser;
 export const selectLoading = (state: RootState) => state.auth.loading;
