@@ -7,7 +7,22 @@ import {
 } from "passport-jwt";
 import User from "../model/userSchema";
 dotenv.config();
+import { Request, RequestHandler } from "express";
+import { Types } from "mongoose";
 
+export interface AuthenticatedRequest extends Request {
+  user: {
+    _id: Types.ObjectId;
+  };
+}
+
+export type AuthenticatedRequestHandler = RequestHandler<
+  any,
+  any,
+  any,
+  any,
+  AuthenticatedRequest
+>;
 const opts: StrategyOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: process.env.JWT_SECRET_KEY as string,

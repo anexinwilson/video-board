@@ -4,6 +4,7 @@ import type { AuthFormData } from "../../types";
 import { useDispatch } from "react-redux";
 import { signUpUser } from "../../reducers/auth/authReducer";
 import type { AppDispatch } from "../../reducers/auth/store";
+import { Link } from "react-router-dom";
 
 const SignUp = () => {
   const [formData, setFormData] = useState<AuthFormData>({
@@ -11,7 +12,7 @@ const SignUp = () => {
     password: "",
   });
 
-  const dispatch = useDispatch<AppDispatch>()
+  const dispatch = useDispatch<AppDispatch>();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -23,7 +24,7 @@ const SignUp = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    dispatch(signUpUser(formData))
+    dispatch(signUpUser(formData));
   };
 
   return (
@@ -71,6 +72,12 @@ const SignUp = () => {
               Sign Up
             </button>
           </form>
+          <Link
+            to="/sign-in"
+            className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-all duration-300"
+          >
+            Already have an account? Sign In
+          </Link>
         </div>
       </div>
     </Layout>
