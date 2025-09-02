@@ -8,6 +8,7 @@ import {
 } from "../../reducers/auth/authReducer";
 import { toast } from "sonner";
 import backendApi from "../../api/backendApi";
+import { useConfig } from "../../customHooks/useConfigHook";
 
 const UserProfile = () => {
   const loggedInUser = useSelector(selectLoggedInUser);
@@ -15,6 +16,7 @@ const UserProfile = () => {
   const [email, setEmail] = useState("");
   const [edit, setEdit] = useState(false);
   const dispatch = useDispatch();
+  const {configWithJWT} = useConfig()
 
   useEffect(() => {
     if (loggedInUser?.name) {
@@ -29,18 +31,18 @@ const UserProfile = () => {
     setEdit((prev) => !prev);
   };
 
-  const token = localStorage.getItem("token");
+  // const token = localStorage.getItem("token");
 
   const handleSaveClick = async () => {
     try {
       const { data } = await backendApi.post<AuthResponse>(
         "/api/v1/user/update",
-        { name, email },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { name, email },configWithJWT
+        // {
+        //   headers: {
+        //     Authorization: `Bearer ${token}`,
+        //   },
+        // }
       );
       if (data.success) {
         toast.success(data.message);

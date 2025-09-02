@@ -8,6 +8,7 @@ import {
 } from "../../utils/passwordHelper";
 import { send } from "process";
 import { generateJwtToken } from "../../utils/generateJwtToken";
+import { resetPasswordEmail } from "../../mailer/resetPassword";
 
 interface RegisterReq extends Request {
   body: {
@@ -49,7 +50,27 @@ export const signInUser: RequestHandler = async (req: RegisterReq, res) => {
       return sendResponse(res, 400, false, "Password does not match");
     }
     const jwtToken = await generateJwtToken(user);
-    sendResponse(res, 200, true, "Logged in successfullly", { user: {token:jwtToken} });
+    sendResponse(res, 200, true, "Logged in successfullly", {
+      user: { token: jwtToken },
+    });
+  } catch (error) {
+    console.error(`Authentication failed: ${error}`);
+    return sendResponse(res, 500, false, "Internal server error");
+  }
+};
+
+export const sendEmailForResetPassword: RequestHandler = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return sendResponse(res, 404, false, "email not found");
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return sendResponse(res, 404, false, "user not found");
+    }
+    await resetPasswordEmail(user);
+    sendResponse(res, 200, true, "Check your mail to reset your password");
   } catch (error) {
     console.error(`Authentication failed: ${error}`);
     return sendResponse(res, 500, false, "Internal server error");
