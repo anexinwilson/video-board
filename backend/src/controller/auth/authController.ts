@@ -6,9 +6,9 @@ import {
   compareHashedPassword,
   hashPassword,
 } from "../../utils/passwordHelper";
-import { send } from "process";
 import { generateJwtToken } from "../../utils/generateJwtToken";
 import { resetPasswordEmail } from "../../mailer/resetPassword";
+import jwt from "jsonwebtoken";
 
 interface RegisterReq extends Request {
   body: {
@@ -50,7 +50,7 @@ export const signInUser: RequestHandler = async (req: RegisterReq, res) => {
       return sendResponse(res, 400, false, "Password does not match");
     }
     const jwtToken = await generateJwtToken(user);
-    sendResponse(res, 200, true, "Logged in successfullly", {
+    sendResponse(res, 200, true, "Logged in successfully", {
       user: { token: jwtToken },
     });
   } catch (error) {
@@ -63,14 +63,59 @@ export const sendEmailForResetPassword: RequestHandler = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
-      return sendResponse(res, 404, false, "email not found");
+      return sendResponse(res, 404, false, "Email not found");
     }
     const user = await User.findOne({ email });
     if (!user) {
-      return sendResponse(res, 404, false, "user not found");
+      return sendResponse(res, 404, false, "User not found");
     }
+    const secretOrKey = process.env.JWT_SECRET_KEY as string;
+    const resetToken = await jwt.sign(
+      { id: user._id, email: user.email },
+      secretOrKey,
+      {
+        expiresIn: "1h",
+      }
+    );
+    user.token = resetToken;
+    await user.save();
     await resetPasswordEmail(user);
     sendResponse(res, 200, true, "Check your mail to reset your password");
+  } catch (error) {
+    console.error(`Authentication failed: ${error}`);
+    return sendResponse(res, 500, false, "Internal server error");
+  }
+};
+
+export const updatePassword: RequestHandler = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!token) {
+      return sendResponse(res, 404, false, "Token not found");
+    }
+
+    const user = await User.findOne({ token });
+    if (!user) {
+      return sendResponse(res, 404, false, "User not found");
+    }
+
+    const secretOrKey = process.env.JWT_SECRET_KEY as string;
+    try {
+      await jwt.verify(token, secretOrKey);
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        return sendResponse(res, 400, false, "Reset token has expired");
+      }
+      return sendResponse(res, 400, false, "Invalid reset token");
+    }
+
+    const hashedPassword = await hashPassword(password);
+    user.password = hashedPassword;
+    user.token = crypto.randomBytes(12).toString("hex");
+    await user.save();
+    return sendResponse(res, 200, true, "Updated your password");
   } catch (error) {
     console.error(`Authentication failed: ${error}`);
     return sendResponse(res, 500, false, "Internal server error");
