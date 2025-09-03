@@ -28,7 +28,6 @@ const SignIn = () => {
     e.preventDefault();
     const {email,password} = formData
     dispatch(signInUser({email,password,navigate}))
-    // console.log(formData.email, formData.password);
   };
 
   return (
@@ -80,7 +79,7 @@ const SignIn = () => {
             </div>
 
             <button
-            disabled = {loading}
+              disabled={loading}
               type="submit"
               className="w-full py-3 px-4 bg-sky-400 text-white font-bold rounded-md shadow-md transition duration-300
                disabled:bg-green-300 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer "
@@ -88,12 +87,22 @@ const SignIn = () => {
               {loading ? "Verifying ..." : "Sign In"}
             </button>
           </form>
-          <Link
-            to="/sign-up"
-            className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-all duration-300 cursor-pointer"
-          >
-            Sign Up
-          </Link>
+          <div className="mt-4 text-center">
+            <Link
+              to="/reset-password"
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Forgot your password?
+            </Link>
+          </div>
+          <div className="mt-4 text-center">
+            <Link
+              to="/sign-up"
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Don't have an account? Sign up for free
+            </Link>
+          </div>
         </div>
       </div>
     </Layout>
