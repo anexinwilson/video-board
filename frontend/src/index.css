@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+/* Editor selection */
+.editor-content ::selection { background:#c7d2fe; color:inherit; }
+
+/* Headings: larger, not bold */
+.editor-content .lex-h1 { font-size:1.75rem; line-height:2rem; font-weight:400; margin:.75rem 0 .25rem; }
+.editor-content .lex-h2 { font-size:1.375rem; line-height:1.75rem; font-weight:400; margin:.6rem 0 .25rem; }
+
+/* Paragraph + lists */
+.editor-content .lex-p { margin:.375rem 0; }
+.editor-content .lex-ul { list-style:disc; padding-left:1.5rem; margin:.375rem 0; }
+.editor-content .lex-ol { list-style:decimal; padding-left:1.5rem; margin:.375rem 0; }
+.editor-content .lex-li { margin:.2rem 0; }
+
+/* Quote */
+.editor-content .lex-quote { border-left:4px solid #d1d5db; padding-left:.75rem; font-style:italic; color:#374151; margin:.5rem 0; }
+
+/* Code block */
+.editor-content .lex-codeblock {
+  display:block; width:100%; white-space:pre; overflow-x:auto;
+  background:#111827; color:#f9fafb; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size:.875rem; padding:.75rem; border-radius:.375rem; margin:.5rem 0;
+}
+
+/* Safety net in case something styles raw tags */
+.editor-content h1, .editor-content h2 { font-weight:400; }
