@@ -76,3 +76,34 @@ export const uploadFile: RequestHandler = async (req, res) => {
     return sendResponse(res, 500, false, "Internal server error");
   }
 };
+
+export const fetchVideos: RequestHandler = async (req, res) => {
+  try {
+    const videos = await Video.find({ isPrivate: false })
+      .sort({
+        createdAt: -1,
+      })
+      .populate("uploadedBy", "email");
+    sendResponse(res, 200, true, "Fetched videos succesfully", { videos });
+  } catch (error) {
+    console.error(`Error in fetching videos ${error}`);
+    return sendResponse(res, 500, false, "Internal server error");
+  }
+};
+
+export const fetchSingleVideo: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return sendResponse(res, 404, false, "Id not found");
+    }
+    const video = await Video.findById(id).populate("uploadedBy", "email");
+    if (!video) {
+      return sendResponse(res, 404, false, "Video not found");
+    }
+    sendResponse(res, 200, true, "Found your video", { video });
+  } catch (error) {
+    console.error(`Error in fetching single video ${error}`);
+    sendResponse(res, 500, false, "Internal server error");
+  }
+};
