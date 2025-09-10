@@ -3,9 +3,11 @@ import authRoute from "./authRoute";
 import passport from "passport";
 import userRoute from "./userRoute";
 import awsRoute from "./awsFileRoute";
+import { downloadVideoById } from "../controller/aws/awsFileController";
 
 const router = express.Router();
 
+router.get("/video/:id/download", downloadVideoById);
 router.use("/auth", authRoute);
 router.use(
   "/user/",
@@ -13,6 +15,5 @@ router.use(
   userRoute
 );
 router.use("/aws", passport.authenticate("jwt", { session: false }), awsRoute);
-
 
 export default router;

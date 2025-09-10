@@ -124,3 +124,39 @@ export const deleteVideoById: RequestHandler = async (req, res) => {
     sendResponse(res, 500, false, "Internal server eroor");
   }
 };
+
+
+
+export const downloadVideoById: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.query;
+    if (!id) {
+      return sendResponse(res, 404, false, "Id not found");
+    }
+    const video = await Video.findById(id);
+    if (!video) {
+      return sendResponse(res, 404, false, "video not found");
+    }
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME as string,
+      Key: video.key,
+    };
+    if (userId) {
+      const user = await User.findById(userId);
+      if (user) {
+        user.downloadCount += 1;
+        await user.save();
+      }
+    }
+    const command = new GetObjectCommand(params);
+    const s3Response = await s3.send(command);
+    const stream = s3Response.Body as Readable;
+    res.setHeader("Content-Disposition", `attachement;filename=${video.title}`);
+    res.setHeader("Content-Type", s3Response.ContentType || "video/mp4");
+    stream.pipe(res);
+  } catch (error) {
+    console.error(`Error in downloading video ${error}`);
+    return sendResponse(res, 500, false, "Internal server error");
+  }
+};
