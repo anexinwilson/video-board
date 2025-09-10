@@ -91,7 +91,7 @@ export const fetchVideos: RequestHandler = async (req, res) => {
   }
 };
 
-export const fetchSingleVideo: RequestHandler = async (req, res) => {
+export const fetchVideoById: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
     if (!id) {
@@ -105,5 +105,22 @@ export const fetchSingleVideo: RequestHandler = async (req, res) => {
   } catch (error) {
     console.error(`Error in fetching single video ${error}`);
     sendResponse(res, 500, false, "Internal server error");
+  }
+};
+
+export const deleteVideoById: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return sendResponse(res, 404, false, "Id not found");
+    }
+    const video = await Video.findByIdAndDelete(id);
+    if (!video) {
+      return sendResponse(res, 404, false, "video to be deleted does not exist");
+    }
+    sendResponse(res, 200, true, "Video deleted succsfully");
+  } catch (error) {
+    console.error(`Error in deleting the video ${error}`);
+    sendResponse(res, 500, false, "Internal server eroor");
   }
 };
