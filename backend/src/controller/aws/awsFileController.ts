@@ -116,7 +116,12 @@ export const deleteVideoById: RequestHandler = async (req, res) => {
     }
     const video = await Video.findByIdAndDelete(id);
     if (!video) {
-      return sendResponse(res, 404, false, "video to be deleted does not exist");
+      return sendResponse(
+        res,
+        404,
+        false,
+        "video to be deleted does not exist"
+      );
     }
     sendResponse(res, 200, true, "Video deleted succsfully");
   } catch (error) {
@@ -124,8 +129,6 @@ export const deleteVideoById: RequestHandler = async (req, res) => {
     sendResponse(res, 500, false, "Internal server eroor");
   }
 };
-
-
 
 export const downloadVideoById: RequestHandler = async (req, res) => {
   try {
@@ -158,5 +161,40 @@ export const downloadVideoById: RequestHandler = async (req, res) => {
   } catch (error) {
     console.error(`Error in downloading video ${error}`);
     return sendResponse(res, 500, false, "Internal server error");
+  }
+};
+
+export const updateVideoById: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return sendResponse(res, 404, false, "Id not found");
+    }
+    const video = await Video.findById(id);
+    if (!video) {
+      return sendResponse(res, 404, false, "Video not found");
+    }
+    Object.assign(video, req.body);
+    await video.save();
+
+    if (req.files && (req.files as any).video) {
+      const videoFile = (req.files as any).video[0];
+      if ("location" in videoFile && "key" in videoFile) {
+        video.path = videoFile.location;
+        video.key = videoFile.key;
+      }
+    }
+
+    if (req.files && (req.files as any).thumbnail) {
+      const thumbNailFile = (req.files as any).thumbnail[0];
+      if ("location" in thumbNailFile && "key" in thumbNailFile) {
+        video.thumbNail = thumbNailFile.location;
+      }
+    }
+    await video.save();
+    sendResponse(res, 200, true, "Video updated succesfully", { video });
+  } catch (error) {
+    console.error(`Error in updating video ${error}`);
+    sendResponse(res, 500, false, "Internal server error");
   }
 };
