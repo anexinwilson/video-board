@@ -8,10 +8,12 @@ import UpdatePassword from "./pages/auth/UpdatePassword";
 import Upload from "./pages/user/Upload";
 import AllVideos from "./pages/video/AllVideos";
 import Home from "./pages/home/Home";
+import VideoPage from "./pages/video/VideoPage";
 
 export const router = createBrowserRouter([
   // Public-only routes: redirect to /user/profile if already logged in
   { path: "/", element: <Home /> },
+  { path: "/video/:id", element: <VideoPage /> },
   { path: "/sign-up", element: <ProtectedRoute element={<SignUp />} /> },
   { path: "/sign-in", element: <ProtectedRoute element={<SignIn />} /> },
   { path: "/reset-password", element: <ProtectedRoute element={<ResetPasswordEmail />} /> },
