@@ -1,7 +1,7 @@
 import { RouterProvider } from "react-router-dom"
 import { router } from "./router"
 import { Provider } from "react-redux"
-import { store } from "./reducers/auth/store"
+import { store } from "./reducers/store"
 import { Toaster } from "sonner"
 
 

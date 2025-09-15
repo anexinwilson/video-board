@@ -3,7 +3,7 @@ import Layout from "../../components/Layout";
 import { Link, useNavigate } from "react-router-dom";
 import type { AuthFormData } from "../../types";
 import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch } from "../../reducers/auth/store";
+import type { AppDispatch } from "../../reducers/store";
 import { selectLoading, signInUser } from "../../reducers/auth/authReducer";
 
 const SignIn = () => {

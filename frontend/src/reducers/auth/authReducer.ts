@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import type { RootState } from "./store";
+import type { RootState } from "../store";
 import backendApi from "../../api/backendApi";
 import { toast } from "sonner";
 import type { NavigateFunction } from "react-router-dom";
