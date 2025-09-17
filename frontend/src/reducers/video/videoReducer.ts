@@ -11,7 +11,7 @@ export interface IVideo {
   description?: string;
   uploadedBy: {
     email: string;
-    name?: string; 
+    name?: string;
   };
   isPrivate: boolean;
   thumbNail: string;
@@ -84,7 +84,6 @@ export const fetchVideosForUser = createAsyncThunk<
   }
 });
 
-
 export const fetchVideosForPublic = createAsyncThunk<
   IVideo[],
   void,
@@ -121,7 +120,6 @@ export const deleteVideo = createAsyncThunk<
     return thunkApi.rejectWithValue(error);
   }
 });
-
 
 export const updateVideo = createAsyncThunk<
   IVideo,
@@ -164,6 +162,25 @@ export const updateVideo = createAsyncThunk<
   }
 });
 
+export const getSearchResults = createAsyncThunk<
+  IVideo[],
+  string,
+  { rejectValue: string; state: RootState }
+>("video/search", async (query, thunkApi) => {
+  try {
+    const { publicVideos, videos } = thunkApi.getState().video;
+    const combinedVideos = [...(publicVideos || []), ...(videos || [])];
+    const filteredVideos = combinedVideos.filter(
+      (video) =>
+        video.title?.toLowerCase().includes(query.toLowerCase()) ||
+        video.description?.toLowerCase().includes(query.toLowerCase())
+    );
+    return filteredVideos;
+  } catch (error: any) {
+    return thunkApi.rejectWithValue(error);
+  }
+});
+
 const videoSlice = createSlice({
   name: "video",
   initialState,
@@ -199,6 +216,9 @@ const videoSlice = createSlice({
           state.videos?.filter((video) => video._id !== action.payload.id) ||
           null;
       })
+      .addCase(getSearchResults.fulfilled, (state, action) => {
+        state.searchResults = action.payload;
+      });
   },
 });
 
