@@ -1,9 +1,9 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import { deleteVideo, type IVideo } from "../reducers/video/videoReducer";
+import { deleteVideo, setEditVideo, type IVideo } from "../reducers/video/videoReducer";
 import parse from "html-react-parser";
 import { FaDownload } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import MuxPlayer from "@mux/mux-player-react";
 import type { ConfigWithJWT } from "../types";
@@ -11,11 +11,12 @@ import type { ConfigWithJWT } from "../types";
 interface Props {
   video: IVideo;
   showEdit?: boolean;
-  configWithJWT?: ConfigWithJWT; // Add this prop for delete functionality
+  configWithJWT?: ConfigWithJWT; 
 }
 
 const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate()
 
   const handleShare = () => {
     const url = `http://localhost:5173/video/${video._id}`;
@@ -38,6 +39,11 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
     } catch {
       toast.error("Download failed");
     }
+  };
+
+  const handleVideoEdit = () => {
+    dispatch(setEditVideo(video));
+    navigate("/user/edit/my-video");
   };
 
   const handleDelete = async () => {
@@ -99,12 +105,12 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
           </button>
           {showEdit && (
             <>
-              <Link
-                to={`/video/${video._id}/edit`}
+              <button
+                onClick={handleVideoEdit}
                 className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
               >
                 Edit
-              </Link>
+              </button>
               {configWithJWT && (
                 <button
                   onClick={handleDelete}

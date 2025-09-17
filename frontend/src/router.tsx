@@ -13,6 +13,7 @@ import AllVideos from "./pages/video/AllVideos";
 import Home from "./pages/home/Home";
 import VideoPage from "./pages/video/VideoPage";
 import MyVideos from "./pages/user/MyVideos";
+import UpdateVideo from "./pages/user/UpdateVideo";
 
 export const router = createBrowserRouter([
   // Public-only routes: redirect to /user/profile if already logged in
@@ -41,6 +42,10 @@ export const router = createBrowserRouter([
   {
     path: "/user/edit/my-videos",
     element: <ProtectedRouteHome element={<MyVideos />} />,
+  },
+  {
+    path: "/user/edit/my-video",
+    element: <ProtectedRouteHome element={<UpdateVideo />} />,
   },
 
   { path: "/all-videos", element: <AllVideos /> },

@@ -27,7 +27,7 @@ export interface EditVideo {
     name?: string;
   };
   isPrivate: boolean | string;
-  thumbnail: File | string;
+  thumbNail: File | string;
 }
 
 export interface VideoState {
@@ -119,6 +119,48 @@ export const deleteVideo = createAsyncThunk<
     return thunkApi.rejectWithValue(data.message);
   } catch (error: any) {
     return thunkApi.rejectWithValue(error);
+  }
+});
+
+
+export const updateVideo = createAsyncThunk<
+  IVideo,
+  {
+    id: string;
+    updateData: Partial<EditVideo>;
+    configWithJwt: ConfigWithJWT;
+  },
+  { rejectValue: string }
+>("video/update", async ({ id, updateData, configWithJwt }, thunkAPI) => {
+  try {
+    const formData = new FormData();
+    if (updateData.path instanceof File) {
+      formData.append("video", updateData.path);
+    }
+    if (updateData.thumbNail instanceof File) {
+      formData.append("thumbnail", updateData.thumbNail);
+    }
+    if (updateData.title) formData.append("title", updateData.title);
+    if (updateData.description)
+      formData.append("description", updateData.description);
+    formData.append("isPrivate", String(updateData.isPrivate));
+    const { data } = await backendApi.put<SingleFileResponse>(
+      `/api/v1/aws/video/${id}`,
+      formData,
+      {
+        ...configWithJwt,
+        headers: {
+          ...configWithJwt.headers,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    if (data.success && data.video) {
+      toast.success(data.message);
+    }
+    return thunkAPI.rejectWithValue(data.message);
+  } catch (error: any) {
+    return thunkAPI.rejectWithValue(error);
   }
 });
 
