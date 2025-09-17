@@ -11,27 +11,27 @@ import type { ConfigWithJWT } from "../types";
 interface Props {
   video: IVideo;
   showEdit?: boolean;
-  configWithJWT?: ConfigWithJWT; 
+  configWithJWT?: ConfigWithJWT;
 }
 
 const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
   const dispatch = useDispatch();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleShare = () => {
-    const url = `http://localhost:5173/video/${video._id}`;
+    const url = `http://localhost:5173/video/${(video as any)._id}`;
     navigator.clipboard.writeText(url).then(() => toast.success("Link copied"));
   };
 
   const handleDownload = async () => {
     try {
-      const response = await fetch(video.path, { mode: "cors" });
+      const response = await fetch((video as any).path, { mode: "cors" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = objectUrl;
-      a.download = `${video.title || "video"}`;
+      a.download = `${(video as any).title || "video"}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -42,7 +42,7 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
   };
 
   const handleVideoEdit = () => {
-    dispatch(setEditVideo(video));
+    dispatch(setEditVideo(video) as any);
     navigate("/user/edit/my-video");
   };
 
@@ -51,11 +51,10 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
       toast.error("Authentication required");
       return;
     }
-    
     try {
-      await dispatch(deleteVideo({ id: video._id, configWithJWT }) as any);
+      await dispatch(deleteVideo({ id: (video as any)._id, configWithJWT }) as any);
       toast.success("Video deleted successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete video");
     }
   };
@@ -65,11 +64,12 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
     ((video as any)?.uploadedBy?.email ? "Unknown" : "Unknown");
 
   return (
-    <div className=" flex flex-col gap-2 bg-white rounded-md m-2">
-      <div className="w-full overflow-hidden rounded-md" style={{ aspectRatio: "16/9" }}>
+    <div className="flex h-full flex-col bg-white">
+      {/* Media: consistent 16:9 area */}
+      <div className="w-full aspect-video overflow-hidden">
         <MuxPlayer
-          src={video.path}
-          poster={video.thumbNail || undefined}
+          src={(video as any).path}
+          poster={(video as any).thumbNail || undefined}
           streamType="on-demand"
           preload="metadata"
           playsInline
@@ -77,15 +77,16 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
           primaryColor="#e5e7eb"
           secondaryColor="#111827"
           accentColor="#2563eb"
-          style={{ width: "100%", height: "100%" }}
+          className="w-full h-full"
           onError={() => toast.error("Could not play this video.")}
         />
       </div>
 
-      <div className="flex items-center justify-between px-2">
+      {/* Actions */}
+      <div className="flex items-center justify-between px-2 py-1">
         <div className="flex gap-2">
           <Link
-            to={`/video/${video._id}`}
+            to={`/video/${(video as any)._id}`}
             className="text-xs bg-black/70 text-white px-2 py-1 rounded hover:bg-black"
           >
             Open
@@ -103,6 +104,7 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
           >
             <FaDownload /> Download
           </button>
+
           {showEdit && (
             <>
               <button
@@ -124,11 +126,19 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
         </div>
       </div>
 
-      <div className="px-2 pb-2">
-        <h2 className="text-lg font-semibold">{video.title}</h2>
+      {/* Text content */}
+      <div className="px-2 pb-3 mt-auto">
+        <h2 className="text-base font-semibold line-clamp-2">{(video as any).title}</h2>
         <div className="flex justify-between items-center">
           <div className="text-gray-600 text-xs">
-            {video?.description ? <p>{parse(video.description.substring(0, 100))}</p> : <p>default</p>}
+            {/* Clamp to prevent tall cards from long descriptions */}
+            <div className="line-clamp-2">
+              {(video as any)?.description ? (
+                <>{parse(((video as any).description as string).substring(0, 140))}</>
+              ) : (
+                "default"
+              )}
+            </div>
             <p className="text-[11px] text-gray-500 mt-1">by {uploaderName}</p>
           </div>
         </div>

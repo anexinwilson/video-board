@@ -9,17 +9,20 @@ import {
 import ResetPasswordEmail from "./pages/auth/ResetPasswordEmail";
 import UpdatePassword from "./pages/auth/UpdatePassword";
 import Upload from "./pages/user/Upload";
-import AllVideos from "./pages/video/AllVideos";
-import Home from "./pages/home/Home";
+import Home from "./pages/home/Home"; // This is now the main home page with video grid
 import VideoPage from "./pages/video/VideoPage";
 import MyVideos from "./pages/user/MyVideos";
 import UpdateVideo from "./pages/user/UpdateVideo";
 import Dashboard from "./pages/user/Dashboard";
 
 export const router = createBrowserRouter([
-  // Public-only routes: redirect to /user/profile if already logged in
+  // Main home page (previously AllVideos, now with professional grid and search)
   { path: "/", element: <Home /> },
+  
+  // Video detail page
   { path: "/video/:id", element: <VideoPage /> },
+  
+  // Public-only routes: redirect to /user/dashboard if already logged in
   { path: "/sign-up", element: <ProtectedRoute element={<SignUp />} /> },
   { path: "/sign-in", element: <ProtectedRoute element={<SignIn />} /> },
   {
@@ -52,6 +55,4 @@ export const router = createBrowserRouter([
     path: "/user/edit/my-video",
     element: <ProtectedRouteHome element={<UpdateVideo />} />,
   },
-
-  { path: "/all-videos", element: <AllVideos /> },
 ]);

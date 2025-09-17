@@ -19,7 +19,6 @@ export default function Layout({ children }: LayoutProps) {
           <nav className="flex items-center gap-3 md:gap-4">
             {[
               { to: "/", label: "Home" },
-              { to: "/all-videos", label: "All Videos" },
               token 
                 ? { to: "/user/dashboard", label: "Dashboard" }
                 : { to: "/sign-in", label: "Sign In" },
@@ -42,12 +41,12 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      <main className="flex-1 pt-24">
-        <div className="mx-auto max-w-7xl w-full px-4 md:px-6">{children}</div>
+      <main className="flex-1 pt-20 w-full">
+        {children}
       </main>
 
       <footer className="bg-white border-t border-zinc-200">
-        <div className="mx-auto max-w-7xl w-full px-4 md:px-6 py-6 text-center text-sm text-zinc-600">
+        <div className="w-full px-6 py-6 text-center text-sm text-zinc-600">
           © {new Date().getFullYear()} VideoBoard — Built with ❤️
         </div>
       </footer>
