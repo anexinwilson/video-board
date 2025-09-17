@@ -6,6 +6,8 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
+  const token = localStorage.getItem("token");
+  
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-zinc-900">
       <header className="fixed top-0 inset-x-0 z-50 h-20 bg-sky-600 text-white border-b border-sky-700 shadow-md">
@@ -18,7 +20,9 @@ export default function Layout({ children }: LayoutProps) {
             {[
               { to: "/", label: "Home" },
               { to: "/all-videos", label: "All Videos" },
-              { to: "/sign-in", label: "Sign In" },
+              token 
+                ? { to: "/user/dashboard", label: "Dashboard" }
+                : { to: "/sign-in", label: "Sign In" },
             ].map((item) => (
               <NavLink
                 key={item.to}
