@@ -7,6 +7,8 @@ import Layout from "../../components/Layout";
 import parse from "html-react-parser";
 import { FaDownload } from "react-icons/fa";
 import MuxPlayer from "@mux/mux-player-react";
+import { useSelector } from "react-redux";
+import { selectLoggedInUser } from "../../reducers/auth/authReducer";
 
 type SingleFileResponse = { success: boolean; message: string; video?: IVideo };
 
@@ -16,6 +18,7 @@ function VideoPage() {
   const [loading, setLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const playerRef = useRef<any>(null);
+  const loggedInUser = useSelector(selectLoggedInUser);
 
   useEffect(() => {
     const run = async () => {
@@ -39,14 +42,18 @@ function VideoPage() {
     if (!video) return;
     try {
       setIsDownloading(true);
+
+      backendApi.post(`/api/v1/video/${video._id}/track-download`, {
+        userId: (loggedInUser as any)?._id,
+      }).catch(() => {});
+
       const res = await fetch(video.path, { mode: "cors" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      const fileFromUrl = decodeURIComponent(new URL(video.path).pathname.split("/").pop() || "video");
       const a = document.createElement("a");
       a.href = url;
-      a.download = fileFromUrl;
+      a.download = (video.title || "video") + ".mp4";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -74,14 +81,11 @@ function VideoPage() {
               preload="metadata"
               playsInline
               crossOrigin="anonymous"
-              primaryColor="#e5e7eb"
-              secondaryColor="#111827"
-              accentColor="#2563eb"
-              style={{ width: "100%", height: "100%" }}
+              className="w-full h-full"
               onError={() => toast.error("Could not play this video.")}
             />
             <button
-              className={`absolute bottom-13 right-4 z-10 bg-green-500 text-white p-3 rounded-full shadow hover:bg-green-600 active:scale-95 transition ${
+              className={`absolute bottom-13 right-4 z-10 bg-green-500 text-white p-3 rounded-full shadow ${
                 isDownloading ? "opacity-60 cursor-not-allowed" : ""
               }`}
               onClick={handleDownload}
