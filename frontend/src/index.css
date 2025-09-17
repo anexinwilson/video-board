@@ -25,3 +25,14 @@
 
 /* Safety net in case something styles raw tags */
 .editor-content h1, .editor-content h2 { font-weight:400; }
+
+@layer base {
+  html {
+    font-family: "Roboto Condensed", sans-serif;
+  }
+}
+
+.active {
+  color: orange;
+}
+

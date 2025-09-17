@@ -1,6 +1,6 @@
 import React from "react";
 import Slider from "react-slick";
-import HeroVideoCard from "./VideoCard";
+import VideoCard from "./VideoCard";
 import type { IVideo } from "../reducers/video/videoReducer";
 
 interface VideoSliderProps {
@@ -42,7 +42,7 @@ const VideoSlider: React.FC<VideoSliderProps> = ({ videos }) => {
   return (
     <Slider {...sliderSettings}>
       {videos?.map((video) => (
-        <HeroVideoCard key={video._id} video={video} />
+        <VideoCard key={video._id} video={video} />
       ))}
     </Slider>
   );

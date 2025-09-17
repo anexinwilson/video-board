@@ -16,9 +16,13 @@ const MyVideos = () => {
   const { configWithJWT } = useConfig();
   const isLoading = useSelector(selectVideoLoading);
   const videos = useSelector(selectUserVideos);
+
   useEffect(() => {
-    dispatch(fetchVideosForUser({configWithJwt: configWithJWT}));
-  }, []);
+    if (configWithJWT) {
+      dispatch(fetchVideosForUser({ configWithJwt: configWithJWT }));
+    }
+  }, [dispatch]);
+
   return (
     <div className="flex w-full gap-2">
       <SideBar />
@@ -29,7 +33,12 @@ const MyVideos = () => {
           ) : (
             <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
               {videos?.map((video) => (
-                <VideoCard key={video._id} video={video} />
+                <VideoCard 
+                  key={video._id} 
+                  video={video} 
+                  showEdit 
+                  configWithJWT={configWithJWT} 
+                />
               ))}
             </div>
           )}

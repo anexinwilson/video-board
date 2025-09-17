@@ -1,4 +1,3 @@
-// src/pages/VideoPage.tsx
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { IVideo } from "../../reducers/video/videoReducer";

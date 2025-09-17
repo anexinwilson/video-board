@@ -11,6 +11,7 @@ export interface IVideo {
   description?: string;
   uploadedBy: {
     email: string;
+    name?: string; 
   };
   isPrivate: boolean;
   thumbNail: string;
@@ -23,6 +24,7 @@ export interface EditVideo {
   description?: string;
   uploadedBy: {
     email: string;
+    name?: string;
   };
   isPrivate: boolean | string;
   thumbnail: File | string;
@@ -36,6 +38,7 @@ export interface VideoState {
   editVideo: IVideo | null;
 }
 
+// payload types
 interface FileFetchPayload {
   configWithJwt: ConfigWithJWT;
 }
@@ -81,6 +84,7 @@ export const fetchVideosForUser = createAsyncThunk<
   }
 });
 
+
 export const fetchVideosForPublic = createAsyncThunk<
   IVideo[],
   void,
@@ -99,7 +103,24 @@ export const fetchVideosForPublic = createAsyncThunk<
   }
 });
 
-
+export const deleteVideo = createAsyncThunk<
+  { id: string },
+  { id: string; configWithJWT: ConfigWithJWT },
+  { rejectValue: string }
+>("video/delete", async ({ id, configWithJWT }, thunkApi) => {
+  try {
+    const { data } = await backendApi.delete<FileResponse>(
+      `/api/v1/aws/video/${id}`,
+      configWithJWT
+    );
+    if (data.success) {
+      return { id };
+    }
+    return thunkApi.rejectWithValue(data.message);
+  } catch (error: any) {
+    return thunkApi.rejectWithValue(error);
+  }
+});
 
 const videoSlice = createSlice({
   name: "video",
@@ -130,12 +151,21 @@ const videoSlice = createSlice({
       })
       .addCase(fetchVideosForUser.rejected, (state) => {
         state.isLoading = false;
-      });
+      })
+      .addCase(deleteVideo.fulfilled, (state, action) => {
+        state.videos =
+          state.videos?.filter((video) => video._id !== action.payload.id) ||
+          null;
+      })
   },
 });
 
 export const videoReducer = videoSlice.reducer;
+export const { setEditVideo } = videoSlice.actions;
 export const selectPublicVideos = (state: RootState) =>
   state.video.publicVideos;
 export const selectUserVideos = (state: RootState) => state.video.videos;
 export const selectVideoLoading = (state: RootState) => state.video.isLoading;
+export const selectEditingVideo = (state: RootState) => state.video.editVideo;
+export const selectSearchResults = (state: RootState) =>
+  state.video.searchResults;

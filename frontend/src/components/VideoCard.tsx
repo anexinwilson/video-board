@@ -1,12 +1,22 @@
 import React from "react";
-import type { IVideo } from "../reducers/video/videoReducer";
+import { useDispatch } from "react-redux";
+import { deleteVideo, type IVideo } from "../reducers/video/videoReducer";
 import parse from "html-react-parser";
 import { FaDownload } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import MuxPlayer from "@mux/mux-player-react";
+import type { ConfigWithJWT } from "../types";
 
-function HeroVideoCard({ video }: { video: IVideo }) {
+interface Props {
+  video: IVideo;
+  showEdit?: boolean;
+  configWithJWT?: ConfigWithJWT; // Add this prop for delete functionality
+}
+
+const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
+  const dispatch = useDispatch();
+
   const handleShare = () => {
     const url = `http://localhost:5173/video/${video._id}`;
     navigator.clipboard.writeText(url).then(() => toast.success("Link copied"));
@@ -18,20 +28,38 @@ function HeroVideoCard({ video }: { video: IVideo }) {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
-      const downloadLink = document.createElement("a");
-      downloadLink.href = objectUrl;
-      downloadLink.download = `${video.title || "video"}.mp4`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      downloadLink.remove();
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = `${video.title || "video"}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
       URL.revokeObjectURL(objectUrl);
     } catch {
       toast.error("Download failed");
     }
   };
 
+  const handleDelete = async () => {
+    if (!configWithJWT) {
+      toast.error("Authentication required");
+      return;
+    }
+    
+    try {
+      await dispatch(deleteVideo({ id: video._id, configWithJWT }) as any);
+      toast.success("Video deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete video");
+    }
+  };
+
+  const uploaderName =
+    (video as any)?.uploadedBy?.name?.trim() ||
+    ((video as any)?.uploadedBy?.email ? "Unknown" : "Unknown");
+
   return (
-    <div className="heroVideoCard flex flex-col gap-2 bg-white rounded-md m-2">
+    <div className=" flex flex-col gap-2 bg-white rounded-md m-2">
       <div className="w-full overflow-hidden rounded-md" style={{ aspectRatio: "16/9" }}>
         <MuxPlayer
           src={video.path}
@@ -69,6 +97,24 @@ function HeroVideoCard({ video }: { video: IVideo }) {
           >
             <FaDownload /> Download
           </button>
+          {showEdit && (
+            <>
+              <Link
+                to={`/video/${video._id}/edit`}
+                className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+              >
+                Edit
+              </Link>
+              {configWithJWT && (
+                <button
+                  onClick={handleDelete}
+                  className="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -77,11 +123,12 @@ function HeroVideoCard({ video }: { video: IVideo }) {
         <div className="flex justify-between items-center">
           <div className="text-gray-600 text-xs">
             {video?.description ? <p>{parse(video.description.substring(0, 100))}</p> : <p>default</p>}
+            <p className="text-[11px] text-gray-500 mt-1">by {uploaderName}</p>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
-export default HeroVideoCard;
+export default VideoCard;

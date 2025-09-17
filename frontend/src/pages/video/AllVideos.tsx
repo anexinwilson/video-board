@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import Layout from "../../components/Layout";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "../../reducers/store";
-import HeroVideoCard from "../../components/VideoCard";
+import VideoCard from "../../components/VideoCard";
 import {
   fetchVideosForPublic,
   selectPublicVideos,
@@ -23,7 +23,7 @@ const AllVideos: React.FC = () => {
           <div className="mt-7">
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
               {publicVideos?.map((video) => (
-                <HeroVideoCard key={video._id} video={video} />
+                <VideoCard key={video._id} video={video} />
               ))}
             </div>
           </div>

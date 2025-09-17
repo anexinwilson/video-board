@@ -56,6 +56,7 @@ export const uploadFile: RequestHandler = async (req, res) => {
                 thumbNail: newVideo.thumbNail,
                 uploadedBy: {
                   email: user?.email,
+                  name: user?.name,
                 },
                 isPrivate: newVideo.isPrivate,
               },
@@ -64,12 +65,7 @@ export const uploadFile: RequestHandler = async (req, res) => {
           return sendResponse(res, 400, false, "Upload failed");
         }
       }
-      return sendResponse(
-        res,
-        404,
-        false,
-        "Not authorized to upload the vidoe"
-      );
+      return sendResponse(res, 404, false, "Not authorized to upload the vidoe");
     }
   } catch (error) {
     console.error(`Error in uploading video ${error}`);
@@ -80,10 +76,8 @@ export const uploadFile: RequestHandler = async (req, res) => {
 export const fetchVideos: RequestHandler = async (req, res) => {
   try {
     const videos = await Video.find({ isPrivate: false })
-      .sort({
-        createdAt: -1,
-      })
-      .populate("uploadedBy", "email");
+      .sort({ createdAt: -1 })
+      .populate("uploadedBy", "email name");
     sendResponse(res, 200, true, "Fetched videos succesfully", { videos });
   } catch (error) {
     console.error(`Error in fetching videos ${error}`);
@@ -97,7 +91,7 @@ export const fetchVideoById: RequestHandler = async (req, res) => {
     if (!id) {
       return sendResponse(res, 404, false, "Id not found");
     }
-    const video = await Video.findById(id).populate("uploadedBy", "email");
+    const video = await Video.findById(id).populate("uploadedBy", "email name");
     if (!video) {
       return sendResponse(res, 404, false, "Video not found");
     }
@@ -116,12 +110,7 @@ export const deleteVideoById: RequestHandler = async (req, res) => {
     }
     const video = await Video.findByIdAndDelete(id);
     if (!video) {
-      return sendResponse(
-        res,
-        404,
-        false,
-        "video to be deleted does not exist"
-      );
+      return sendResponse(res, 404, false, "video to be deleted does not exist");
     }
     sendResponse(res, 200, true, "Video deleted succsfully");
   } catch (error) {
@@ -199,7 +188,6 @@ export const updateVideoById: RequestHandler = async (req, res) => {
   }
 };
 
-
 export const fetchUserVideos: RequestHandler = async (req, res) => {
   try {
     if (req.user instanceof User) {
@@ -207,10 +195,9 @@ export const fetchUserVideos: RequestHandler = async (req, res) => {
       if (!userId) {
         return sendResponse(res, 404, false, "user id not found");
       }
-
       const videos = await Video.find({ uploadedBy: userId }).populate(
         "uploadedBy",
-        "email"
+        "email name"
       );
       return sendResponse(res, 200, true, "Found your videos", { videos });
     }
