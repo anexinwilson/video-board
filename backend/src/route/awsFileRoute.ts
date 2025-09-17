@@ -2,6 +2,7 @@ import express from "express";
 import { upload } from "../middleware/multerS3Middleware";
 import {
   deleteVideoById,
+  fetchUserVideos,
   fetchVideoById,
   fetchVideos,
   updateVideoById,
@@ -13,5 +14,6 @@ router.post("/videos", upload, uploadFile);
 router.get("/video/:id", fetchVideoById);
 router.delete("/video/:id", deleteVideoById);
 router.put("/video/:id", upload, updateVideoById);
+router.get("/videos", fetchUserVideos);
 
 export default router;

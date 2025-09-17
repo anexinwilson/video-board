@@ -99,6 +99,8 @@ export const fetchVideosForPublic = createAsyncThunk<
   }
 });
 
+
+
 const videoSlice = createSlice({
   name: "video",
   initialState,
@@ -135,3 +137,5 @@ const videoSlice = createSlice({
 export const videoReducer = videoSlice.reducer;
 export const selectPublicVideos = (state: RootState) =>
   state.video.publicVideos;
+export const selectUserVideos = (state: RootState) => state.video.videos;
+export const selectVideoLoading = (state: RootState) => state.video.isLoading;
