@@ -9,7 +9,7 @@ import {
 import ResetPasswordEmail from "./pages/auth/ResetPasswordEmail";
 import UpdatePassword from "./pages/auth/UpdatePassword";
 import Upload from "./pages/user/Upload";
-import Home from "./pages/home/Home"; // This is now the main home page with video grid
+import Home from "./pages/home/Home"; 
 import VideoPage from "./pages/video/VideoPage";
 import MyVideos from "./pages/user/MyVideos";
 import UpdateVideo from "./pages/user/UpdateVideo";

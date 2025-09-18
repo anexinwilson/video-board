@@ -3,7 +3,7 @@ import Layout from "../../components/Layout";
 import type { AuthFormData } from "../../types";
 import { useDispatch } from "react-redux";
 import { signUpUser } from "../../reducers/auth/authReducer";
-import type { AppDispatch } from "../../reducers/auth/store";
+import type { AppDispatch } from "../../reducers/store";
 import { Link } from "react-router-dom";
 
 const SignUp = () => {

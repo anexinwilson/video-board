@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { IVideo } from "../../reducers/video/videoReducer";
 import backendApi from "../../api/backendApi";
@@ -19,6 +19,7 @@ function VideoPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const playerRef = useRef<any>(null);
   const loggedInUser = useSelector(selectLoggedInUser);
+  const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
     const run = async () => {
@@ -38,14 +39,24 @@ function VideoPage() {
     if (id) run();
   }, [id]);
 
+  // increment view count once per mount (prevents double increment in React 18 StrictMode)
+  useEffect(() => {
+    if (id && !hasTrackedViewRef.current) {
+      hasTrackedViewRef.current = true;
+      backendApi.post(`/api/v1/video/${id}/track-view`).catch(() => {});
+    }
+  }, [id]);
+
   const handleDownload = async () => {
     if (!video) return;
     try {
       setIsDownloading(true);
 
-      backendApi.post(`/api/v1/video/${video._id}/track-download`, {
-        userId: (loggedInUser as any)?._id,
-      }).catch(() => {});
+      backendApi
+        .post(`/api/v1/video/${video._id}/track-download`, {
+          userId: (loggedInUser as any)?._id,
+        })
+        .catch(() => {});
 
       const res = await fetch(video.path, { mode: "cors" });
       if (!res.ok) throw new Error();
@@ -66,7 +77,14 @@ function VideoPage() {
   };
 
   if (loading) return <p className="text-lg text-center">Loading...</p>;
-  if (!video) return <Layout><div className="p-6">No video found.</div></Layout>;
+  if (!video)
+    return (
+      <Layout>
+        <div className="p-6">No video found.</div>
+      </Layout>
+    );
+
+  const views = (video as any)?.viewCount ?? 0;
 
   return (
     <Layout>
@@ -99,6 +117,7 @@ function VideoPage() {
 
           <div className="mt-4 px-1">
             <h1 className="text-2xl font-bold break-words">{video.title}</h1>
+            <div className="text-sm text-gray-500 mt-1">{views} {views === 1 ? "view" : "views"}</div>
             <div className="text-gray-600 mt-2 text-sm">
               {video.description ? parse(video.description.substring(0, 300)) : "Default description"}
             </div>

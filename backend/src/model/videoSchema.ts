@@ -10,6 +10,7 @@ export interface IVideo extends Document {
   path: string;
   isPrivate: boolean;
   thumbNail?: string;
+  viewCount: number;
 }
 const videoSchema: Schema = new Schema(
   {
@@ -28,6 +29,7 @@ const videoSchema: Schema = new Schema(
       default:
         "https://static.vecteezy.com/system/resources/thumbnails/005/048/106/small_2x/black-and-yellow-grunge-modern-thumbnail-background-free-vector.jpg",
     },
+    viewCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

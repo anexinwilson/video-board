@@ -31,8 +31,6 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
       backendApi.post(`/api/v1/video/${video._id}/track-download`, {
         userId: (loggedInUser as any)?._id,
       }).catch(() => {});
-
-      // fetch file as Blob and download
       const res = await fetch(video.path, { mode: "cors" });
       if (!res.ok) throw new Error();
       const blob = await res.blob();
@@ -83,34 +81,20 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
         />
       </div>
 
-      <div className="flex items-center justify-between px-2 py-1">
-        <div className="flex gap-2">
-          <Link to={`/video/${video._id}`} className="text-xs bg-black/70 text-white px-2 py-1 rounded">
-            Open
-          </Link>
-          <button onClick={handleShare} className="text-xs bg-black/70 text-white px-2 py-1 rounded">
-            Share
-          </button>
-          <button
-            onClick={handleDownload}
-            className="flex items-center gap-1 text-xs bg-black/70 text-white px-2 py-1 rounded"
-            title="Download"
-          >
-            <FaDownload /> Download
-          </button>
-          {showEdit && (
-            <>
-              <button onClick={handleVideoEdit} className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
-                Edit
-              </button>
-              {configWithJWT && (
-                <button onClick={handleDelete} className="text-xs bg-red-600 text-white px-2 py-1 rounded">
-                  Delete
-                </button>
-              )}
-            </>
-          )}
-        </div>
+      <div className="flex items-center gap-2 px-2 py-1">
+        <Link to={`/video/${video._id}`} className="text-xs bg-black/70 text-white px-2 py-1 rounded">Open</Link>
+        <button onClick={handleShare} className="text-xs bg-black/70 text-white px-2 py-1 rounded">Share</button>
+        <button onClick={handleDownload} className="flex items-center gap-1 text-xs bg-black/70 text-white px-2 py-1 rounded" title="Download">
+          <FaDownload /> Download
+        </button>
+        {showEdit && (
+          <>
+            <button onClick={handleVideoEdit} className="text-xs bg-blue-600 text-white px-2 py-1 rounded">Edit</button>
+            {configWithJWT && (
+              <button onClick={handleDelete} className="text-xs bg-red-600 text-white px-2 py-1 rounded">Delete</button>
+            )}
+          </>
+        )}
       </div>
 
       <div className="px-2 pb-3 mt-auto">
@@ -119,7 +103,7 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
           <div className="line-clamp-2">
             {video?.description ? <>{parse((video.description as string).substring(0, 140))}</> : "default"}
           </div>
-          <p className="text-[11px] text-gray-500 mt-1">by {uploaderName}</p>
+          <p className="text-[11px] text-gray-500 mt-1">by {uploaderName} • {(video as any).viewCount ?? 0} views</p>
         </div>
       </div>
     </div>

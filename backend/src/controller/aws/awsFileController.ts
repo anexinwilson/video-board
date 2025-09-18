@@ -22,7 +22,9 @@ export const uploadFile: RequestHandler = async (req, res) => {
       let { title, description, isPrivate } = req.body;
       let baseName;
       const videoFile = (req.files as any).video[0];
-      const thumbNailFile = (req.files as any).thumbnail ? (req.files as any).thumbnail[0] : null;
+      const thumbNailFile = (req.files as any).thumbnail
+        ? (req.files as any).thumbnail[0]
+        : null;
 
       if (!title) {
         const extension = path.extname(videoFile.originalname);
@@ -36,7 +38,9 @@ export const uploadFile: RequestHandler = async (req, res) => {
           path: videoFile.location,
           key: videoFile.key,
           isPrivate,
-          thumbNail: thumbNailFile ? (thumbNailFile as any).location : undefined,
+          thumbNail: thumbNailFile
+            ? (thumbNailFile as any).location
+            : undefined,
         });
         const user = await User.findById((req.user as any)._id);
         if (user) {
@@ -64,7 +68,9 @@ export const uploadFile: RequestHandler = async (req, res) => {
 
 export const fetchVideos: RequestHandler = async (_req, res) => {
   try {
-    const videos = await Video.find({ isPrivate: false }).sort({ createdAt: -1 }).populate("uploadedBy", "email name");
+    const videos = await Video.find({ isPrivate: false })
+      .sort({ createdAt: -1 })
+      .populate("uploadedBy", "email name");
     sendResponse(res, 200, true, "Fetched videos succesfully", { videos });
   } catch {
     return sendResponse(res, 500, false, "Internal server error");
@@ -73,7 +79,10 @@ export const fetchVideos: RequestHandler = async (_req, res) => {
 
 export const fetchVideoById: RequestHandler = async (req, res) => {
   try {
-    const video = await Video.findById(req.params.id).populate("uploadedBy", "email name");
+    const video = await Video.findById(req.params.id).populate(
+      "uploadedBy",
+      "email name"
+    );
     if (!video) return sendResponse(res, 404, false, "Video not found");
     sendResponse(res, 200, true, "Found your video", { video });
   } catch {
@@ -84,7 +93,13 @@ export const fetchVideoById: RequestHandler = async (req, res) => {
 export const deleteVideoById: RequestHandler = async (req, res) => {
   try {
     const video = await Video.findByIdAndDelete(req.params.id);
-    if (!video) return sendResponse(res, 404, false, "video to be deleted does not exist");
+    if (!video)
+      return sendResponse(
+        res,
+        404,
+        false,
+        "video to be deleted does not exist"
+      );
     sendResponse(res, 200, true, "Video deleted succsfully");
   } catch {
     sendResponse(res, 500, false, "Internal server eroor");
@@ -103,7 +118,10 @@ export const downloadVideoById: RequestHandler = async (req, res) => {
     const s3Response = await s3.send(command);
     const stream = s3Response.Body as Readable;
 
-    res.setHeader("Content-Disposition", `attachment; filename="${(video.title || "video")}.mp4"`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${video.title || "video"}.mp4"`
+    );
     res.setHeader("Content-Type", s3Response.ContentType || "video/mp4");
     stream.pipe(res);
   } catch {
@@ -111,7 +129,6 @@ export const downloadVideoById: RequestHandler = async (req, res) => {
   }
 };
 
-/** minimal tracker: increments user's downloadCount */
 export const trackVideoDownload: RequestHandler = async (req, res) => {
   try {
     const { userId } = req.body;
@@ -158,9 +175,24 @@ export const fetchUserVideos: RequestHandler = async (req, res) => {
   try {
     const userId = (req.user as any)?._id;
     if (!userId) return sendResponse(res, 404, false, "user id not found");
-    const videos = await Video.find({ uploadedBy: userId }).populate("uploadedBy", "email name");
+    const videos = await Video.find({ uploadedBy: userId }).populate(
+      "uploadedBy",
+      "email name"
+    );
     return sendResponse(res, 200, true, "Found your videos", { videos });
   } catch {
     return sendResponse(res, 500, false, "Internal server errror");
+  }
+};
+
+export const trackVideoView: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (id) {
+      await Video.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
+    }
+    return res.status(204).end();
+  } catch {
+    return res.status(204).end();
   }
 };

@@ -15,6 +15,8 @@ export interface IVideo {
   };
   isPrivate: boolean;
   thumbNail: string;
+  viewCount: number;
+
 }
 
 export interface EditVideo {
