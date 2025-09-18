@@ -4,15 +4,17 @@ import type { AuthFormData } from "../../types";
 import { useDispatch } from "react-redux";
 import { signUpUser } from "../../reducers/auth/authReducer";
 import type { AppDispatch } from "../../reducers/store";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const SignUp = () => {
   const [formData, setFormData] = useState<AuthFormData>({
     email: "",
     password: "",
+    username: "",
   });
 
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -24,7 +26,7 @@ const SignUp = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    dispatch(signUpUser(formData));
+    dispatch(signUpUser({ ...formData, navigate }));
   };
 
   return (
@@ -35,6 +37,21 @@ const SignUp = () => {
             Join Us Today
           </h1>
           <form onSubmit={handleSubmit} className="space-y-7">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Username
+              </label>
+              <input
+                type="text"
+                name="username"
+                required
+                placeholder="Choose a unique username"
+                className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
+                value={formData.username}
+                onChange={handleChange}
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Email

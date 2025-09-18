@@ -63,7 +63,7 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
   };
 
   const uploaderName =
-    (video as any)?.uploadedBy?.name?.trim() ||
+    (video as any)?.uploadedBy?.username?.trim() ||
     ((video as any)?.uploadedBy?.email ? "Unknown" : "Unknown");
 
   return (

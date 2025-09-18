@@ -7,7 +7,7 @@ import type { NavigateFunction } from "react-router-dom";
 interface User {
   _id: string;
   email: string;
-  name?: string;
+  username: string;
   token: string;
   uploadCount: number;
   downloadCount: number;
@@ -27,6 +27,8 @@ interface SignInPayload {
 interface SignUpPayload {
   email: string;
   password: string;
+  username: string;
+  navigate: NavigateFunction;
 }
 
 export interface AuthResponse {
@@ -44,21 +46,33 @@ export const signUpUser = createAsyncThunk<
   void,
   SignUpPayload,
   { rejectValue: string }
->("auth/sign-up-user", async (payload) => {
+>("auth/sign-up-user", async (payload, thunkApi) => {
   try {
-    const { data } = await backendApi.post<AuthResponse>(
+    const { email, password, username, navigate } = payload;
+    const signUpRes = await backendApi.post<AuthResponse>(
       "/api/v1/auth/sign-up",
-      payload
+      { email, password, username }
     );
-    if (data.success) {
-      // console.log(data.message);
-      toast.success(data.message);
+    if (!signUpRes.data.success) {
+      toast.warning(signUpRes.data.message);
+      return;
+    }
+    toast.success(signUpRes.data.message);
+    const signInRes = await backendApi.post<AuthResponse>("/api/v1/auth/sign-in", { email, password });
+    if (signInRes.data.success && signInRes.data.user?.token) {
+      localStorage.setItem("token", signInRes.data.user.token);
+      toast.success("Signed in");
+      navigate("/user/dashboard");
     } else {
-      // console.log(data.message);
-      toast.warning(data.message);
+      toast.warning(signInRes.data.message || "Sign in failed");
     }
   } catch (error: any) {
-    console.log(error);
+    const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Something went wrong";
+    toast.error(errorMessage);
+    throw errorMessage;
   }
 });
 
@@ -74,11 +88,9 @@ export const signInUser = createAsyncThunk<
       { email, password }
     );
     if (data.success && data.user?.token) {
-      if (data.user) {
-        toast.success(data.message);
-        localStorage.setItem("token", data.user.token);
-      }
-      navigate("/user/profile");
+      localStorage.setItem("token", data.user.token);
+      toast.success(data.message);
+      navigate("/user/dashboard");
       return data.user.token || null;
     } else {
       toast.warning(data.message);
@@ -86,9 +98,11 @@ export const signInUser = createAsyncThunk<
     }
   } catch (error: any) {
     const errorMessage =
-      error.response?.data?.message || "Something went wrong";
-    toast.error(error);
-    return thunkApi.rejectWithValue(error);
+      error?.response?.data?.message ||
+      error?.message ||
+      "Invalid email or password";
+    toast.error(errorMessage);
+    return thunkApi.rejectWithValue(errorMessage);
   }
 });
 
@@ -110,15 +124,14 @@ export const fetchUserDetails = createAsyncThunk<
         },
       }
     );
-
     if (data.success && data.user) {
-      return data.user;
+      return data.user as any;
     } else {
       return thunkApi.rejectWithValue(data.message);
     }
   } catch (error: any) {
     const errorMessage =
-      error.response?.data?.message || "Something went wrong";
+      error?.response?.data?.message || error?.message || "Something went wrong";
     return thunkApi.rejectWithValue(errorMessage);
   }
 });
@@ -133,9 +146,9 @@ const authSlice = createSlice({
       toast.info("We will miss you");
     },
     updateUser: (state, action) => {
-      const { name, email } = action.payload;
+      const { username, email } = action.payload as { username: string; email: string };
       if (state.loggedInUser) {
-        state.loggedInUser.name = name;
+        state.loggedInUser.username = username;
         state.loggedInUser.email = email;
       }
     },
@@ -160,11 +173,20 @@ const authSlice = createSlice({
       })
       .addCase(fetchUserDetails.rejected, (state) => {
         state.loading = false;
+      })
+      .addCase(signUpUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(signUpUser.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(signUpUser.rejected, (state) => {
+        state.loading = false;
       });
   },
 });
 
 export const authReducer = authSlice.reducer;
-export const { logOutUser,updateUser } = authSlice.actions;
+export const { logOutUser, updateUser } = authSlice.actions;
 export const selectLoggedInUser = (state: RootState) => state.auth.loggedInUser;
 export const selectLoading = (state: RootState) => state.auth.loading;

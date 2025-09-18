@@ -12,15 +12,15 @@ import { useConfig } from "../../customHooks/useConfigHook";
 
 const UserProfile = () => {
   const loggedInUser = useSelector(selectLoggedInUser);
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [edit, setEdit] = useState(false);
   const dispatch = useDispatch();
   const {configWithJWT} = useConfig()
 
   useEffect(() => {
-    if (loggedInUser?.name) {
-      setName(loggedInUser.name);
+    if (loggedInUser?.username) {
+      setUsername(loggedInUser.username);
     }
     if (loggedInUser?.email) {
       setEmail(loggedInUser.email);
@@ -31,22 +31,15 @@ const UserProfile = () => {
     setEdit((prev) => !prev);
   };
 
-  // const token = localStorage.getItem("token");
-
   const handleSaveClick = async () => {
     try {
       const { data } = await backendApi.post<AuthResponse>(
         "/api/v1/user/update",
-        { name, email },configWithJWT
-        // {
-        //   headers: {
-        //     Authorization: `Bearer ${token}`,
-        //   },
-        // }
+        { username, email },configWithJWT
       );
       if (data.success) {
         toast.success(data.message);
-        dispatch(updateUser({ email, name }));
+        dispatch(updateUser({ email: data.user?.email, username: data.user?.username }));
         setEdit(false)
       } else {
         toast.warning(data.message);
@@ -67,17 +60,17 @@ const UserProfile = () => {
 
           <div className="container flex flex-col gap-4">
             <div className="flex flex-col">
-              <label htmlFor="name" className="font-medium text-gray-600 mb-2">
-                Name
+              <label htmlFor="username" className="font-medium text-gray-600 mb-2">
+                Username
               </label>
               <input
                 type="text"
-                name="name"
-                id="name"
-                placeholder="Enter your name"
-                value={name}
+                name="username"
+                id="username"
+                placeholder="Enter your username"
+                value={username}
                 disabled={!edit}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => setUsername(e.target.value)}
                 className={`w-full p-3 border rounded-lg transition-colors ${
                   edit
                     ? "border-blue-500 bg-white"

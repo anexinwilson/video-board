@@ -54,7 +54,7 @@ export const uploadFile: RequestHandler = async (req, res) => {
             title: newVideo.title,
             description: newVideo.description,
             thumbNail: newVideo.thumbNail,
-            uploadedBy: { email: user?.email, name: user?.name },
+            uploadedBy: { email: user?.email, username: (user as any)?.username },
             isPrivate: newVideo.isPrivate,
           },
         });
@@ -70,7 +70,7 @@ export const fetchVideos: RequestHandler = async (_req, res) => {
   try {
     const videos = await Video.find({ isPrivate: false })
       .sort({ createdAt: -1 })
-      .populate("uploadedBy", "email name");
+      .populate("uploadedBy", "email username");
     sendResponse(res, 200, true, "Fetched videos succesfully", { videos });
   } catch {
     return sendResponse(res, 500, false, "Internal server error");
@@ -81,7 +81,7 @@ export const fetchVideoById: RequestHandler = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id).populate(
       "uploadedBy",
-      "email name"
+      "email username"
     );
     if (!video) return sendResponse(res, 404, false, "Video not found");
     sendResponse(res, 200, true, "Found your video", { video });
@@ -177,7 +177,7 @@ export const fetchUserVideos: RequestHandler = async (req, res) => {
     if (!userId) return sendResponse(res, 404, false, "user id not found");
     const videos = await Video.find({ uploadedBy: userId }).populate(
       "uploadedBy",
-      "email name"
+      "email username"
     );
     return sendResponse(res, 200, true, "Found your videos", { videos });
   } catch {

@@ -33,9 +33,9 @@ const Dashboard = () => {
                   <FaUser className="h-6 w-6 text-blue-500" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-1">Name</h3>
+                  <h3 className="text-lg font-semibold mb-1">Username</h3>
                   <p className="text-gray-700 capitalize">
-                    {loggedInUser?.name}
+                    {loggedInUser?.username}
                   </p>
                 </div>
               </div>

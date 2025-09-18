@@ -14,20 +14,30 @@ interface RegisterReq extends Request {
   body: {
     email: string;
     password: string;
+    username: string;
   };
 }
 
 export const signUpUser: RequestHandler = async (req: RegisterReq, res) => {
   try {
-    const { email, password } = req.body;
-    const isExistingUser = await User.findOne({ email });
-
+    const { email, password, username } = req.body;
+    if (!email || !password || !username) {
+      return sendResponse(res, 400, false, "Email, password, and username are required");
+    }
+    const [isExistingUser, isExistingUsername] = await Promise.all([
+      User.findOne({ email }),
+      User.findOne({ username }),
+    ]);
     if (isExistingUser) {
-      return sendResponse(res, 400, false, "User already exists");
+      return sendResponse(res, 400, false, "Email already in use");
+    }
+    if (isExistingUsername) {
+      return sendResponse(res, 400, false, "Username already taken");
     }
     const hashedPassword = await hashPassword(password);
     const newUser = await User.create({
       email,
+      username,
       password: hashedPassword,
       token: crypto.randomBytes(12).toString("hex"),
     });
@@ -51,7 +61,14 @@ export const signInUser: RequestHandler = async (req: RegisterReq, res) => {
     }
     const jwtToken = await generateJwtToken(user);
     sendResponse(res, 200, true, "Logged in successfully", {
-      user: { token: jwtToken },
+      user: {
+        token: jwtToken,
+        _id: user._id,
+        email: user.email,
+        username: (user as any).username,
+        uploadCount: (user as any).uploadCount,
+        downloadCount: (user as any).downloadCount,
+      },
     });
   } catch (error) {
     console.error(`Authentication failed: ${error}`);
