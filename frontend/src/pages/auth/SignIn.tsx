@@ -1,20 +1,22 @@
 import React, { useState } from "react";
 import Layout from "../../components/Layout";
-import { Link, useNavigate } from "react-router-dom";
 import type { AuthFormData } from "../../types";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "../../reducers/store";
 import { selectLoading, signInUser } from "../../reducers/auth/authReducer";
+import { Link, useNavigate } from "react-router-dom";
+
+type SignInForm = Pick<AuthFormData, "email" | "password">;
 
 const SignIn = () => {
-  const [formData, setFormData] = useState<AuthFormData>({
+  const [formData, setFormData] = useState<SignInForm>({
     email: "",
     password: "",
   });
 
-  const loading = useSelector(selectLoading)
-  const navigate = useNavigate()
-  const dispatch = useDispatch<AppDispatch>()
+  const loading = useSelector(selectLoading);
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -26,8 +28,8 @@ const SignIn = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const {email,password} = formData
-    dispatch(signInUser({email,password,navigate}))
+    const { email, password } = formData;
+    dispatch(signInUser({ email, password, navigate }));
   };
 
   return (
@@ -81,8 +83,7 @@ const SignIn = () => {
             <button
               disabled={loading}
               type="submit"
-              className="w-full py-3 px-4 bg-sky-400 text-white font-bold rounded-md shadow-md transition duration-300
-               disabled:bg-green-300 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer "
+              className="w-full py-3 px-4 bg-sky-400 text-white font-bold rounded-md shadow-md transition duration-300 disabled:bg-green-300 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer "
             >
               {loading ? "Verifying ..." : "Sign In"}
             </button>

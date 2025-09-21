@@ -3,12 +3,11 @@ import authRoute from "./authRoute";
 import passport from "passport";
 import userRoute from "./userRoute";
 import awsRoute from "./awsFileRoute";
-import { downloadVideoById, fetchVideos, trackVideoDownload, trackVideoView } from "../controller/aws/awsFileController";
+import { fetchVideos, trackVideoDownload, trackVideoView } from "../controller/aws/awsFileController";
 
 const router = express.Router();
 
 router.get("/videos", fetchVideos);
-router.get("/video/:id/download", downloadVideoById);
 router.post("/video/:id/track-download", trackVideoDownload);
 router.post("/video/:id/track-view", trackVideoView);
 

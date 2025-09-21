@@ -5,9 +5,8 @@ import routes from "./route/index";
 import passportJwtStrategy from "./config/passportJwtStrategy";
 import cors from "cors";
 
-const app = express();
-
 dotenv.config();
+const app = express();
 connectDB();
 
 const corsOptions = {
@@ -15,14 +14,13 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
 app.use(passportJwtStrategy.initialize());
-
-const port = process.env.PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use("/api/v1", routes);
-app.listen(process.env.port, () => {
-  console.log(`listening to port ${port}`);
+
+const port = process.env.PORT || 8001;
+
+app.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
 });

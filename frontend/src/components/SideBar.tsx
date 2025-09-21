@@ -12,7 +12,7 @@ import {
 import { IoIosLogOut } from "react-icons/io";
 import { fetchUserDetails, logOutUser } from "../reducers/auth/authReducer";
 import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../reducers/auth/store";
+import type { AppDispatch } from "../reducers/store";
 
 const SideBar = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
