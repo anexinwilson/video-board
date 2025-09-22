@@ -1,14 +1,8 @@
-import React, { useEffect, useState } from "react";
+// Left navigation used on user pages.
+// Loads user details on mount to populate dashboard cards elsewhere.
+import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import {
-  FaBars,
-  FaCog,
-  FaHome,
-  FaTimes,
-  FaUpload,
-  FaUser,
-  FaVideo,
-} from "react-icons/fa";
+import { FaBars, FaCog, FaHome, FaTimes, FaUpload, FaUser, FaVideo } from "react-icons/fa";
 import { IoIosLogOut } from "react-icons/io";
 import { fetchUserDetails, logOutUser } from "../reducers/auth/authReducer";
 import { useDispatch } from "react-redux";
@@ -19,16 +13,16 @@ const SideBar = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
-  const toggleSidebar = () => {
-    setIsOpen((prev) => !prev);
-  };
+  const toggleSidebar = () => setIsOpen((prev) => !prev);
 
   useEffect(() => {
+    // Best-effort user refresh; no token guard here since thunk checks it.
     dispatch(fetchUserDetails());
-  }, []);
+  }, [dispatch]);
 
   return (
     <>
+      {/* Sidebar for desktop; slides in on mobile */}
       <div
         className={`fixed top-0 left-0 z-40 w-64 h-screen bg-black text-white lg:bg-bgOne lg:text-textOne shadow-lg transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
@@ -36,6 +30,7 @@ const SideBar = () => {
         <div className="p-4 text-2xl font-semibold border-b border-gray-300 hidden md:block">
           VideoBoard
         </div>
+
         <nav className="mt-10 md:mt-7">
           <ul className="space-y-2">
             <li>
@@ -48,6 +43,7 @@ const SideBar = () => {
                 <span>Home</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/user/dashboard"
@@ -58,6 +54,7 @@ const SideBar = () => {
                 <span>Dashboard</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/user/upload-video"
@@ -68,6 +65,7 @@ const SideBar = () => {
                 <span>Upload Video</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/user/edit/my-videos"
@@ -78,6 +76,7 @@ const SideBar = () => {
                 <span>My Videos</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/user/profile"
@@ -88,7 +87,9 @@ const SideBar = () => {
                 <span>User profile</span>
               </NavLink>
             </li>
+
             <li>
+              {/* Local logout, then route back to sign-in */}
               <div
                 className="flex items-center p-3 hover:bg-gray-200 hover:text-black rounded-md cursor-pointer transition-colors duration-200"
                 onClick={() => {
@@ -104,11 +105,9 @@ const SideBar = () => {
         </nav>
       </div>
 
+      {/* Mobile top bar with hamburger */}
       <div className="fixed top-0 left-0 right-0 bg-black lg:hidden text-white h-12 flex items-center px-4 shadow-md z-50">
-        <button
-          onClick={toggleSidebar}
-          className="lg:hidden text-white text-2xl"
-        >
+        <button onClick={toggleSidebar} className="lg:hidden text-white text-2xl">
           {isOpen ? <FaTimes /> : <FaBars />}
         </button>
 

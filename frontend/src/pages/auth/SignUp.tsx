@@ -1,3 +1,4 @@
+// Registration screen: creates user then signs them in for a smooth start.
 import React, { useState } from "react";
 import Layout from "../../components/Layout";
 import type { AuthFormData } from "../../types";
@@ -7,24 +8,16 @@ import type { AppDispatch } from "../../reducers/store";
 import { Link, useNavigate } from "react-router-dom";
 
 const SignUp = () => {
-  const [formData, setFormData] = useState<AuthFormData>({
-    email: "",
-    password: "",
-    username: "",
-  });
-
+  const [formData, setFormData] = useState<AuthFormData>({ email: "", password: "", username: "" });
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     dispatch(signUpUser({ ...formData, navigate }));
   };
@@ -33,14 +26,11 @@ const SignUp = () => {
     <Layout>
       <div className="flex items-center justify-center p-4 w-full">
         <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-6">
-          <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-            Join Us Today
-          </h1>
+          <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Join Us Today</h1>
+
           <form onSubmit={handleSubmit} className="space-y-7">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Username</label>
               <input
                 type="text"
                 name="username"
@@ -53,9 +43,7 @@ const SignUp = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
               <input
                 type="email"
                 name="email"
@@ -68,9 +56,7 @@ const SignUp = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Password</label>
               <input
                 type="password"
                 name="password"
@@ -82,17 +68,12 @@ const SignUp = () => {
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full py-3 px-4 bg-sky-400 text-white font-bold rounded-md shadow-md transition duration-300 disabled:bg-green-300 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
-            >
+            <button type="submit" className="w-full py-3 px-4 bg-sky-400 text-white font-bold rounded-md shadow-md">
               Sign Up
             </button>
           </form>
-          <Link
-            to="/sign-in"
-            className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-all duration-300"
-          >
+
+          <Link to="/sign-in" className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500">
             Already have an account? Sign In
           </Link>
         </div>

@@ -1,4 +1,6 @@
-import { RequestHandler } from "express";
+// Video CRUD and metrics handlers, plus S3-backed upload pipeline.
+// Note: S3 credentials should come from the Lambda role in production (avoid static keys).
+import { Request, RequestHandler } from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import path from "path";
@@ -11,6 +13,7 @@ import { Readable } from "stream";
 const s3 = new S3Client({
   region: process.env.AWS_REGION as string,
   credentials: {
+    // In Lambda, prefer IAM role over env keys if possible
     accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
   },
@@ -21,15 +24,20 @@ export const uploadFile: RequestHandler = async (req, res) => {
     if (req.files && (req.files as any).video) {
       let { title, description, isPrivate } = req.body;
       let baseName;
+
+      // Uploaded files provided by multer-s3
       const videoFile = (req.files as any).video[0];
       const thumbNailFile = (req.files as any).thumbnail
         ? (req.files as any).thumbnail[0]
         : null;
 
+      // Default title from file name when not provided
       if (!title) {
         const extension = path.extname(videoFile.originalname);
         baseName = path.basename(videoFile.originalname, extension);
       }
+
+      // Persist video metadata
       if ("location" in videoFile && "key" in videoFile && req.user) {
         const newVideo = await Video.create({
           title: title || baseName,
@@ -38,15 +46,16 @@ export const uploadFile: RequestHandler = async (req, res) => {
           path: videoFile.location,
           key: videoFile.key,
           isPrivate,
-          thumbNail: thumbNailFile
-            ? (thumbNailFile as any).location
-            : undefined,
+          thumbNail: thumbNailFile ? (thumbNailFile as any).location : undefined,
         });
+
+        // Track user upload count
         const user = await User.findById((req.user as any)._id);
         if (user) {
           user.uploadCount += 1;
           await user.save();
         }
+
         return sendResponse(res, 200, true, "Video uploaded successfully", {
           video: {
             _id: newVideo._id,
@@ -59,6 +68,7 @@ export const uploadFile: RequestHandler = async (req, res) => {
           },
         });
       }
+
       return sendResponse(res, 400, false, "Upload failed");
     }
   } catch {
@@ -68,6 +78,7 @@ export const uploadFile: RequestHandler = async (req, res) => {
 
 export const fetchVideos: RequestHandler = async (_req, res) => {
   try {
+    // Public feed only returns non-private videos
     const videos = await Video.find({ isPrivate: false })
       .sort({ createdAt: -1 })
       .populate("uploadedBy", "email username");
@@ -93,22 +104,18 @@ export const fetchVideoById: RequestHandler = async (req, res) => {
 export const deleteVideoById: RequestHandler = async (req, res) => {
   try {
     const video = await Video.findByIdAndDelete(req.params.id);
-    if (!video)
-      return sendResponse(
-        res,
-        404,
-        false,
-        "video to be deleted does not exist"
-      );
+    if (!video) {
+      return sendResponse(res, 404, false, "video to be deleted does not exist");
+    }
     sendResponse(res, 200, true, "Video deleted succsfully");
   } catch {
     sendResponse(res, 500, false, "Internal server eroor");
   }
 };
 
-
 export const trackVideoDownload: RequestHandler = async (req, res) => {
   try {
+    // Optional: increment download counter for analytics
     const { userId } = req.body;
     if (userId) {
       const user = await User.findById(userId);
@@ -127,8 +134,11 @@ export const updateVideoById: RequestHandler = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
     if (!video) return sendResponse(res, 404, false, "Video not found");
+
+    // Merge allowed fields
     Object.assign(video, req.body);
 
+    // If new files were uploaded, patch paths
     if (req.files && (req.files as any).video) {
       const vf = (req.files as any).video[0];
       if ("location" in vf && "key" in vf) {
@@ -142,6 +152,7 @@ export const updateVideoById: RequestHandler = async (req, res) => {
         video.thumbNail = (tf as any).location;
       }
     }
+
     await video.save();
     sendResponse(res, 200, true, "Video updated succesfully", { video });
   } catch {
@@ -151,8 +162,10 @@ export const updateVideoById: RequestHandler = async (req, res) => {
 
 export const fetchUserVideos: RequestHandler = async (req, res) => {
   try {
+    // Returns private and public videos for the authenticated owner
     const userId = (req.user as any)?._id;
     if (!userId) return sendResponse(res, 404, false, "user id not found");
+
     const videos = await Video.find({ uploadedBy: userId }).populate(
       "uploadedBy",
       "email username"
@@ -165,6 +178,7 @@ export const fetchUserVideos: RequestHandler = async (req, res) => {
 
 export const trackVideoView: RequestHandler = async (req, res) => {
   try {
+    // Lightweight view increment for analytics
     const { id } = req.params;
     if (id) {
       await Video.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });

@@ -1,3 +1,5 @@
+// App store with two slices: auth + video.
+// Exports RootState and AppDispatch helpers for typed hooks.
 import { configureStore } from "@reduxjs/toolkit";
 import { authReducer } from "./auth/authReducer";
 import { videoReducer } from "./video/videoReducer";

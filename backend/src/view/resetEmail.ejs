@@ -1,124 +1,48 @@
+<!-- Password reset email template. Token is a short-lived JWT. -->
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Reset Request</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Password Reset Request</title>
 </head>
+<body style="margin:0; padding:0; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif; min-height:100vh;">
+  <!-- Card -->
+  <div style="max-width:600px; margin:0 auto; padding:40px 20px;">
+    <div style="background:#fff; border-radius:20px; box-shadow:0 20px 40px rgba(0,0,0,0.1); overflow:hidden; border:1px solid rgba(255,255,255,0.2);">
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding:40px 30px; text-align:center; color:#fff;">
+        <h1 style="margin:0; font-size:28px; font-weight:700;">Password Reset</h1>
+        <p style="margin:10px 0 0; font-size:16px; opacity:0.9;">Secure your account with a new password</p>
+      </div>
 
-<body
-    style="margin: 0; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh;">
+      <!-- Body -->
+      <div style="padding:40px 30px; text-align:center;">
+        <p style="font-size:18px; color:#2c3e50; margin:0 0 15px;">We received a request to reset your password</p>
+        <p style="font-size:16px; color:#7f8c8d; margin:0; line-height:1.6;">
+          Click the button below to create a new password. This link will expire in 1 hour.
+        </p>
 
-    <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <a href="<%= frontendUrl %>/reset-password/<%= token %>"
+           style="display:inline-block; padding:16px 32px; font-size:16px; font-weight:600; text-decoration:none; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:#fff; border-radius:50px; box-shadow:0 8px 16px rgba(102,126,234,0.3); transition:all .3s;">
+          Reset Password
+        </a>
 
-        <div style="background: rgba(255, 255, 255, 0.95); 
-                    backdrop-filter: blur(10px); 
-                    border-radius: 20px; 
-                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); 
-                    padding: 0; 
-                    overflow: hidden;
-                    border: 1px solid rgba(255, 255, 255, 0.2);">
-
-            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
-                        padding: 40px 30px; 
-                        text-align: center; 
-                        color: white;">
-
-                <div style="width: 80px; 
-                           height: 80px; 
-                           background: rgba(255, 255, 255, 0.2); 
-                           border-radius: 50%; 
-                           margin: 0 auto 20px; 
-                           display: flex; 
-                           align-items: center; 
-                           justify-content: center; 
-                           backdrop-filter: blur(10px);">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-                        <path
-                            d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6z" />
-                    </svg>
-                </div>
-
-                <h1 style="margin: 0; 
-                           font-size: 28px; 
-                           font-weight: 700; 
-                           text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                    Password Reset
-                </h1>
-
-                <p style="margin: 10px 0 0; 
-                          font-size: 16px; 
-                          opacity: 0.9;">
-                    Secure your account with a new password
-                </p>
-            </div>
-
-            <div style="padding: 40px 30px; text-align: center;">
-
-                <div style="margin-bottom: 30px;">
-                    <p style="font-size: 18px; 
-                              color: #2c3e50; 
-                              margin: 0 0 15px; 
-                              line-height: 1.5;">
-                        We received a request to reset your password
-                    </p>
-
-                    <p style="font-size: 16px; 
-                              color: #7f8c8d; 
-                              margin: 0; 
-                              line-height: 1.6;">
-                        Click the button below to create a new password. This link will expire in 24 hours for security
-                        purposes.
-                    </p>
-                </div>
-
-                <a href="http://localhost:5173/reset-password/<%= token%>" style="display: inline-block;
-                          padding: 16px 32px;
-                          font-size: 16px;
-                          font-weight: 600;
-                          text-decoration: none;
-                          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                          color: white;
-                          border-radius: 50px;
-                          box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
-                          transition: all 0.3s ease;
-                          text-transform: uppercase;
-                          letter-spacing: 1px;">
-                    Reset Password
-                </a>
-
-                <div style="margin-top: 40px; 
-                           padding-top: 30px; 
-                           border-top: 2px solid #ecf0f1;">
-                    <p style="font-size: 14px; 
-                              color: #95a5a6; 
-                              margin: 0 0 10px; 
-                              line-height: 1.5;">
-                        If you didn't request this password reset, you can safely ignore this email.
-                    </p>
-
-                    <p style="font-size: 14px; 
-                              color: #95a5a6; 
-                              margin: 0; 
-                              line-height: 1.5;">
-                        For security reasons, this link will expire in 1 hours.
-                    </p>
-                </div>
-            </div>
-
-            <div style="background: #f8f9fa; 
-                        padding: 25px 30px; 
-                        text-align: center; 
-                        border-top: 1px solid #dee2e6;">
-                <p style="margin: 0; 
-                          font-size: 13px; 
-                          color: #6c757d;">
-                    © 2025 VideoBoard. All rights reserved.
-                </p>
-            </div>
+        <div style="margin-top:40px; padding-top:30px; border-top:2px solid #ecf0f1;">
+          <p style="font-size:14px; color:#95a5a6; margin:0 0 10px;">
+            If you didn't request this, you can ignore this email.
+          </p>
+          <p style="font-size:14px; color:#95a5a6; margin:0;">
+            For security reasons, this link will expire in 1 hour.
+          </p>
         </div>
-    </div>
-</body>
+      </div>
 
+      <!-- Footer -->
+      <div style="background:#f8f9fa; padding:25px 30px; text-align:center; border-top:1px solid #dee2e6;">
+        <p style="margin:0; font-size:13px; color:#6c757d;">© 2025 VideoBoard. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
+</body>
 </html>

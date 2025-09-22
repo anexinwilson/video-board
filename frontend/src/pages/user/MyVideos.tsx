@@ -1,4 +1,6 @@
-import React, { useEffect, useRef } from "react";
+// Auth-only listing of the user's own videos.
+// Uses a ref to prevent duplicate fetches caused by React strict/dev behaviors.
+import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchVideosForUser,
@@ -20,6 +22,7 @@ const MyVideos = () => {
   const videos = useSelector(selectUserVideos);
 
   const didFetchRef = useRef(false);
+
   useEffect(() => {
     if (configWithJWT && !didFetchRef.current) {
       didFetchRef.current = true;
@@ -56,12 +59,17 @@ const MyVideos = () => {
                     key={video._id}
                     className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition"
                   >
-                    <VideoCard video={video} showEdit configWithJWT={configWithJWT} />
+                    <VideoCard
+                      video={video}
+                      showEdit
+                      configWithJWT={configWithJWT}
+                    />
                   </div>
                 ))}
               </div>
             </>
           ) : (
+            // Empty state with a gentle nudge to upload
             <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-10 text-center">
               <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-2xl bg-blue-100">
                 <FaCloudUploadAlt className="text-blue-600 text-2xl" />
@@ -70,7 +78,8 @@ const MyVideos = () => {
                 You haven’t uploaded any videos yet
               </h3>
               <p className="mt-2 text-gray-600">
-                Upload your first video and it will appear here. You can edit, share, and track views and downloads.
+                Upload your first video and it will appear here. You can edit,
+                share, and track views and downloads.
               </p>
               <div className="mt-6">
                 <Link
@@ -80,18 +89,30 @@ const MyVideos = () => {
                   Upload a video
                 </Link>
               </div>
+
+              {/* Quick benefits */}
               <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="font-semibold text-gray-800">High quality playback</p>
-                  <p className="text-sm text-gray-500 mt-1">Smooth, on-demand streaming.</p>
+                  <p className="font-semibold text-gray-800">
+                    High quality playback
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Smooth, on-demand streaming.
+                  </p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <p className="font-semibold text-gray-800">Easy sharing</p>
-                  <p className="text-sm text-gray-500 mt-1">Copy a link or open the video page.</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Copy a link or open the video page.
+                  </p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="font-semibold text-gray-800">Track performance</p>
-                  <p className="text-sm text-gray-500 mt-1">Views  update automatically.</p>
+                  <p className="font-semibold text-gray-800">
+                    Track performance
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Views update automatically.
+                  </p>
                 </div>
               </div>
             </div>

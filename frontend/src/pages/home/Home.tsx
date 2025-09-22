@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useMemo } from "react";
+// Public landing page with search, "all videos", and a "recent" strip.
+// All data comes from the video slice thunks to keep components dumb.
+import React, { useEffect, useMemo, useState } from "react";
 import Layout from "../../components/Layout";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -23,13 +25,31 @@ const Home = () => {
   const isLoading = useSelector(selectVideoLoading);
   const dispatch = useDispatch<AppDispatch>();
 
-  useEffect(() => { dispatch(fetchVideosForPublic()); }, [dispatch]);
-  useEffect(() => { if (searchTerm) dispatch(getSearchResults(searchTerm)); }, [searchTerm, dispatch]);
+  // Initial fetch for public videos.
+  useEffect(() => {
+    dispatch(fetchVideosForPublic());
+  }, [dispatch]);
 
-  const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setSearchTerm(query.trim()); };
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") handleSearch(e as any); };
-  const clearSearch = () => { setQuery(""); setSearchTerm(""); };
+  // Client-side search across the combined list (see slice).
+  useEffect(() => {
+    if (searchTerm) dispatch(getSearchResults(searchTerm));
+  }, [searchTerm, dispatch]);
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchTerm(query.trim());
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") handleSearch(e as any);
+  };
+
+  const clearSearch = () => {
+    setQuery("");
+    setSearchTerm("");
+  };
+
+  // Compute which videos to show and the "recent" subset.
   const { displayVideos, recentVideos, remainingVideos } = useMemo(() => {
     const videos = searchTerm && searchResults ? searchResults : publicVideos || [];
     if (searchTerm) return { displayVideos: videos, recentVideos: [], remainingVideos: [] };
@@ -46,6 +66,7 @@ const Home = () => {
     };
   }, [publicVideos, searchResults, searchTerm, showMoreVideos]);
 
+  // Simple skeleton to avoid layout shift while loading.
   const VideoGridSkeleton = () => (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
       {[...Array(20)].map((_, i) => (
@@ -60,7 +81,7 @@ const Home = () => {
 
   return (
     <Layout>
-      {/* Hide fullscreen button ONLY on Home (no prop changes) */}
+      {/* Hide fullscreen button ONLY on Home (static CSS override) */}
       <style>{`
         .home-page mux-player::part(fullscreen-button),
         .home-page mux-player [part~="fullscreen-button"] { display: none !important; }
@@ -73,7 +94,7 @@ const Home = () => {
           <div className="max-w-[1400px] mx-auto px-6 py-12">
             <div className="text-center mb-10">
               <h1 className="text-5xl font-bold text-gray-900 mb-4">Discover Amazing Videos</h1>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
                 Explore our collection of high-quality videos from creators around the world
               </p>
             </div>
@@ -94,7 +115,7 @@ const Home = () => {
                     <button
                       type="button"
                       onClick={clearSearch}
-                      className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xl font-bold transition-colors"
+                      className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xl font-bold"
                       aria-label="Clear"
                       title="Clear"
                     >
@@ -116,13 +137,16 @@ const Home = () => {
               <div className="mt-6 text-center">
                 <span className="inline-flex items-center px-4 py-2 rounded-full text-sm bg-blue-100 text-blue-800 font-medium">
                   Showing results for: "{searchTerm}"
-                  <button onClick={clearSearch} className="ml-3 hover:text-blue-900 font-bold">×</button>
+                  <button onClick={clearSearch} className="ml-3 hover:text-blue-900 font-bold">
+                    ×
+                  </button>
                 </span>
               </div>
             )}
           </div>
         </div>
 
+        {/* Lists */}
         <div className="max-w-[1400px] mx-auto px-6 py-8">
           {/* All / Search Results */}
           <div className="mb-16">
@@ -133,6 +157,7 @@ const Home = () => {
                 </div>
                 {searchTerm ? `Search Results` : "All Videos"}
               </h2>
+
               {!searchTerm && (displayVideos?.length ?? 0) > 0 && (
                 <span className="text-sm font-medium text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
                   Showing {displayVideos.length} of {publicVideos?.length || 0}

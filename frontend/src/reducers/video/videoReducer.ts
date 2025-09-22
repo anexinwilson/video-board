@@ -1,3 +1,5 @@
+// Video slice: public feed, user library, search, and edit/delete.
+// Thunks talk to backend; UI remains stateless.
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { ConfigWithJWT } from "../../types";
 import { toast } from "sonner";
@@ -9,14 +11,10 @@ export interface IVideo {
   path: string;
   title?: string;
   description?: string;
-  uploadedBy: {
-    email: string;
-    name?: string;
-  };
+  uploadedBy: { email: string; name?: string };
   isPrivate: boolean;
   thumbNail: string;
   viewCount: number;
-
 }
 
 export interface EditVideo {
@@ -24,10 +22,7 @@ export interface EditVideo {
   path: File | string;
   title?: string;
   description?: string;
-  uploadedBy: {
-    email: string;
-    name?: string;
-  };
+  uploadedBy: { email: string; name?: string };
   isPrivate: boolean | string;
   thumbNail: File | string;
 }
@@ -40,17 +35,15 @@ export interface VideoState {
   editVideo: IVideo | null;
 }
 
-// payload types
+// API payload contracts
 interface FileFetchPayload {
   configWithJwt: ConfigWithJWT;
 }
-
 interface FileResponse {
   success: boolean;
   message: string;
   videos?: IVideo[];
 }
-
 interface SingleFileResponse {
   success: boolean;
   message: string;
@@ -65,6 +58,7 @@ const initialState: VideoState = {
   editVideo: null,
 };
 
+// Auth-only list
 export const fetchVideosForUser = createAsyncThunk<
   IVideo[],
   FileFetchPayload,
@@ -73,12 +67,10 @@ export const fetchVideosForUser = createAsyncThunk<
   try {
     const { configWithJwt } = payload;
     const { data } = await backendApi.get<FileResponse>(
-      "/api/v1/aws/videos",
+      "/api/v1/videos",
       configWithJwt
     );
-    if (data.success) {
-      return data.videos || [];
-    }
+    if (data.success) return data.videos || [];
     return thunkapi.rejectWithValue(data.message);
   } catch (error: any) {
     const errMessage = error.response?.data?.message || "Something went wrong";
@@ -86,6 +78,7 @@ export const fetchVideosForUser = createAsyncThunk<
   }
 });
 
+// Public list (no token)
 export const fetchVideosForPublic = createAsyncThunk<
   IVideo[],
   void,
@@ -93,9 +86,7 @@ export const fetchVideosForPublic = createAsyncThunk<
 >("/videos/fetch-public-videos", async (_, thunkAPI) => {
   try {
     const { data } = await backendApi.get<FileResponse>("/api/v1/videos");
-    if (data.success) {
-      return data.videos || [];
-    }
+    if (data.success) return data.videos || [];
     return thunkAPI.rejectWithValue(data.message);
   } catch (error: any) {
     const errMessage = error.response?.data?.message || "Something went wrong";
@@ -104,6 +95,7 @@ export const fetchVideosForPublic = createAsyncThunk<
   }
 });
 
+// Delete by id
 export const deleteVideo = createAsyncThunk<
   { id: string },
   { id: string; configWithJWT: ConfigWithJWT },
@@ -111,41 +103,35 @@ export const deleteVideo = createAsyncThunk<
 >("video/delete", async ({ id, configWithJWT }, thunkApi) => {
   try {
     const { data } = await backendApi.delete<FileResponse>(
-      `/api/v1/aws/video/${id}`,
+      `/api/v1/video/${id}`,
       configWithJWT
     );
-    if (data.success) {
-      return { id };
-    }
+    if (data.success) return { id };
     return thunkApi.rejectWithValue(data.message);
   } catch (error: any) {
     return thunkApi.rejectWithValue(error);
   }
 });
 
+// Update metadata/files using FormData
 export const updateVideo = createAsyncThunk<
   IVideo,
-  {
-    id: string;
-    updateData: Partial<EditVideo>;
-    configWithJwt: ConfigWithJWT;
-  },
+  { id: string; updateData: Partial<EditVideo>; configWithJwt: ConfigWithJWT },
   { rejectValue: string }
 >("video/update", async ({ id, updateData, configWithJwt }, thunkAPI) => {
   try {
     const formData = new FormData();
-    if (updateData.path instanceof File) {
+    if (updateData.path instanceof File)
       formData.append("video", updateData.path);
-    }
-    if (updateData.thumbNail instanceof File) {
+    if (updateData.thumbNail instanceof File)
       formData.append("thumbnail", updateData.thumbNail);
-    }
     if (updateData.title) formData.append("title", updateData.title);
     if (updateData.description)
       formData.append("description", updateData.description);
     formData.append("isPrivate", String(updateData.isPrivate));
+
     const { data } = await backendApi.put<SingleFileResponse>(
-      `/api/v1/aws/video/${id}`,
+      `/api/v1/video/${id}`,
       formData,
       {
         ...configWithJwt,
@@ -155,8 +141,10 @@ export const updateVideo = createAsyncThunk<
         },
       }
     );
+
     if (data.success && data.video) {
       toast.success(data.message);
+      return data.video;
     }
     return thunkAPI.rejectWithValue(data.message);
   } catch (error: any) {
@@ -164,6 +152,7 @@ export const updateVideo = createAsyncThunk<
   }
 });
 
+// Client-side search across current memory (public + user lists)
 export const getSearchResults = createAsyncThunk<
   IVideo[],
   string,
@@ -187,6 +176,7 @@ const videoSlice = createSlice({
   name: "video",
   initialState,
   reducers: {
+    // Stash a video for the edit page.
     setEditVideo: (state, action) => {
       state.editVideo = action.payload;
     },
@@ -220,6 +210,26 @@ const videoSlice = createSlice({
       })
       .addCase(getSearchResults.fulfilled, (state, action) => {
         state.searchResults = action.payload;
+      })
+      .addCase(updateVideo.fulfilled, (state, action) => {
+        // Replace the updated video in user's list if present
+        const idx = state.videos?.findIndex(
+          (v) => v._id === action.payload._id
+        );
+        if (idx !== undefined && idx! >= 0 && state.videos) {
+          const next = [...state.videos];
+          next[idx!] = action.payload;
+          state.videos = next;
+        }
+        // If it was public, optionally update there as well
+        const pidx = state.publicVideos?.findIndex(
+          (v) => v._id === action.payload._id
+        );
+        if (pidx !== undefined && pidx! >= 0 && state.publicVideos) {
+          const nextP = [...state.publicVideos];
+          nextP[pidx!] = action.payload;
+          state.publicVideos = nextP;
+        }
       });
   },
 });

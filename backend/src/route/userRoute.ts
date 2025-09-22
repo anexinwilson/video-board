@@ -1,8 +1,10 @@
-import express from 'express'
-import { getUserDetails, updateUser } from '../controller/user/userController'
-const router = express.Router()
+// User profile and profile update routes. Mounted under /api/v1/user.
+import express from "express";
+import { getUserDetails, updateUser } from "../controller/user/userController";
 
-router.get('/profile',getUserDetails)
-router.post("/update",updateUser)
+const router = express.Router();
 
-export default router
+router.get("/profile", getUserDetails);
+router.post("/update", updateUser);
+
+export default router;

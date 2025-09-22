@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+// Public video details page.
+// Fetches video, tracks a view once per mount, allows download.
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { IVideo } from "../../reducers/video/videoReducer";
 import backendApi from "../../api/backendApi";
@@ -21,13 +23,14 @@ function VideoPage() {
   const loggedInUser = useSelector(selectLoggedInUser);
   const hasTrackedViewRef = useRef(false);
 
+  // Load video payload (auth optional)
   useEffect(() => {
     const run = async () => {
       try {
         setLoading(true);
         const token = localStorage.getItem("token");
         const cfg = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
-        const { data } = await backendApi.get<SingleFileResponse>(`/api/v1/aws/video/${id}`, cfg);
+        const { data } = await backendApi.get<SingleFileResponse>(`/api/v1/video/${id}`, cfg);
         if (data.success && data.video) setVideo(data.video);
         else toast.error(data.message || "Failed to fetch video");
       } catch {
@@ -39,7 +42,7 @@ function VideoPage() {
     if (id) run();
   }, [id]);
 
-  // increment view count once per mount (prevents double increment in React 18 StrictMode)
+  // Increment view count once (best-effort)
   useEffect(() => {
     if (id && !hasTrackedViewRef.current) {
       hasTrackedViewRef.current = true;
@@ -52,16 +55,16 @@ function VideoPage() {
     try {
       setIsDownloading(true);
 
+      // Fire-and-forget server metric
       backendApi
-        .post(`/api/v1/video/${video._id}/track-download`, {
-          userId: (loggedInUser as any)?._id,
-        })
+        .post(`/api/v1/video/${video._id}/track-download`, { userId: (loggedInUser as any)?._id })
         .catch(() => {});
 
       const res = await fetch(video.path, { mode: "cors" });
       if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
+
       const a = document.createElement("a");
       a.href = url;
       a.download = (video.title || "video") + ".mp4";
@@ -117,7 +120,9 @@ function VideoPage() {
 
           <div className="mt-4 px-1">
             <h1 className="text-2xl font-bold break-words">{video.title}</h1>
-            <div className="text-sm text-gray-500 mt-1">{views} {views === 1 ? "view" : "views"}</div>
+            <div className="text-sm text-gray-500 mt-1">
+              {views} {views === 1 ? "view" : "views"}
+            </div>
             <div className="text-gray-600 mt-2 text-sm">
               {video.description ? parse(video.description.substring(0, 300)) : "Default description"}
             </div>

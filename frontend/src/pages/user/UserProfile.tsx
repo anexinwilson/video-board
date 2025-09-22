@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+// Basic profile editor (username/email only).
+// Uses backend /user/update endpoint then updates local slice.
+import { useEffect, useState } from "react";
 import SideBar from "../../components/SideBar";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -16,35 +18,32 @@ const UserProfile = () => {
   const [email, setEmail] = useState("");
   const [edit, setEdit] = useState(false);
   const dispatch = useDispatch();
-  const {configWithJWT} = useConfig()
+  const { configWithJWT } = useConfig();
 
   useEffect(() => {
-    if (loggedInUser?.username) {
-      setUsername(loggedInUser.username);
-    }
-    if (loggedInUser?.email) {
-      setEmail(loggedInUser.email);
-    }
+    if (loggedInUser?.username) setUsername(loggedInUser.username);
+    if (loggedInUser?.email) setEmail(loggedInUser.email);
   }, [loggedInUser]);
 
-  const handleEditClick = () => {
-    setEdit((prev) => !prev);
-  };
+  const handleEditClick = () => setEdit((prev) => !prev);
 
   const handleSaveClick = async () => {
     try {
       const { data } = await backendApi.post<AuthResponse>(
         "/api/v1/user/update",
-        { username, email },configWithJWT
+        { username, email },
+        configWithJWT
       );
       if (data.success) {
         toast.success(data.message);
-        dispatch(updateUser({ email: data.user?.email, username: data.user?.username }));
-        setEdit(false)
+        dispatch(
+          updateUser({ email: data.user?.email, username: data.user?.username })
+        );
+        setEdit(false);
       } else {
         toast.warning(data.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("Internal server error");
     }
   };
@@ -60,7 +59,10 @@ const UserProfile = () => {
 
           <div className="container flex flex-col gap-4">
             <div className="flex flex-col">
-              <label htmlFor="username" className="font-medium text-gray-600 mb-2">
+              <label
+                htmlFor="username"
+                className="font-medium text-gray-600 mb-2"
+              >
                 Username
               </label>
               <input

@@ -1,4 +1,6 @@
-import React, { useEffect } from "react";
+// Auth-only dashboard: reads user profile and shows quick stats.
+// Fetches fresh profile on mount if a token exists.
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchUserDetails,
@@ -11,12 +13,12 @@ import { FaEnvelope, FaUser, FaUserTag } from "react-icons/fa";
 const Dashboard = () => {
   const loggedInUser = useSelector(selectLoggedInUser);
   const dispatch = useDispatch<AppDispatch>();
+
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      dispatch(fetchUserDetails());
-    }
-  }, []);
+    if (token) dispatch(fetchUserDetails());
+  }, [dispatch]);
+
   return (
     <div className="flex  gap-2 pr-2 h-full m-2">
       <SideBar />
@@ -24,9 +26,12 @@ const Dashboard = () => {
         <h1 className="text-center font-semibold text-xl text-gray-700 mb-5">
           Dashboard
         </h1>
+
+        {/* Basic user cards */}
         <div className="container flex flex-col gap-6">
           <div className="bg-gray-100 p-6 rounded-lg shadow-md mb-10">
             <h2 className="text-xl font-bold mb-4">User Information</h2>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="bg-white p-4 rounded-lg shadow-md flex items-center">
                 <div className="bg-blue-100 p-2 rounded-full mr-4">
@@ -39,6 +44,7 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
+
               <div className="bg-white p-4 rounded-lg shadow-md flex items-center">
                 <div className="bg-green-100 p-2 rounded-full mr-4">
                   <FaEnvelope className="h-6 w-6 text-green-500" />
@@ -48,6 +54,7 @@ const Dashboard = () => {
                   <p className="text-gray-700 ">{loggedInUser?.email}</p>
                 </div>
               </div>
+
               <div className="bg-white p-4 rounded-lg shadow-md flex items-center">
                 <div className="bg-red-100 p-2 rounded-full mr-4">
                   <FaUserTag className="h-6 w-6 text-red-500" />
@@ -60,6 +67,7 @@ const Dashboard = () => {
             </div>
           </div>
 
+          {/* Totals pulled from profile */}
           <div className="flex flex-col lg:flex-row gap-3 justify-around items-center">
             <div className="bg-blue-100 p-6 rounded-lg shadow-md w-full lg:w-1/2">
               <h2 className="text-lg font-semibold text-blue-600 mb-2">

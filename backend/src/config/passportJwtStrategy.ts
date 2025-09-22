@@ -10,12 +10,15 @@ dotenv.config();
 import { Request, RequestHandler } from "express";
 import { Types } from "mongoose";
 
+// Custom interface for authenticated requests
+// Extends base Express Request to include user data
 export interface AuthenticatedRequest extends Request {
   user: {
     _id: Types.ObjectId;
   };
 }
 
+// Type for request handlers that require authentication
 export type AuthenticatedRequestHandler = RequestHandler<
   any,
   any,
@@ -23,14 +26,18 @@ export type AuthenticatedRequestHandler = RequestHandler<
   any,
   AuthenticatedRequest
 >;
+
+// JWT strategy configuration options
 const opts: StrategyOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: process.env.JWT_SECRET_KEY as string,
 };
 
+// Configure passport to use JWT strategy
 passport.use(
   new JWTStrategy(opts, async (jwtPayload, done) => {
     try {
+      // Find user by ID from JWT payload, exclude password
       const user = await User.findById(jwtPayload._id).select("-password");
       if (!user) {
         return done(null, false);

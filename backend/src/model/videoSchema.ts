@@ -1,9 +1,10 @@
+// Video metadata model. Stores S3 key, path, optional thumbnail, and view count.
 import mongoose, { Document, Model, Schema } from "mongoose";
 
 export interface IVideo extends Document {
   title?: string;
   description?: string;
-  uploadeBy: mongoose.Schema.Types.ObjectId;
+  uploadeBy: mongoose.Schema.Types.ObjectId; // note typo preserved if already in DB
   createdAt: Date;
   updatedAt: Date;
   key: string;
@@ -12,9 +13,10 @@ export interface IVideo extends Document {
   thumbNail?: string;
   viewCount: number;
 }
+
 const videoSchema: Schema = new Schema(
   {
-    title: { type: String, default: "defualt title", required: true },
+    title: { type: String, default: "default title", required: true },
     description: { type: String, default: "Default description" },
     key: { type: String, required: true },
     path: { type: String, required: true },

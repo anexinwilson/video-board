@@ -1,3 +1,5 @@
+// Edit flow for a single video.
+// Uses FormData only when files are present; rest is text metadata.
 import React, { useRef, useState } from "react";
 import SideBar from "../../components/SideBar";
 import { toast } from "sonner";
@@ -15,12 +17,16 @@ const UpdateVideo = () => {
   const dispatch = useDispatch<AppDispatch>();
   const fileRef = useRef<HTMLInputElement>(null);
   const thumbnailRef = useRef<HTMLInputElement>(null);
+
+  // Local previews for selected files
   const [videoSrc, setVideoSrc] = useState<string | null>(
     editVideo?.path || ""
   );
   const [thumbnailSrc, setThumbnailSrc] = useState<string | null>(
     editVideo?.thumbNail || ""
   );
+
+  // Basic fields
   const [videoName, setVideoName] = useState<string>("");
   const [thumbName, setThumbName] = useState<string>("");
   const [title, setTitle] = useState<string>(editVideo?.title || "");
@@ -34,9 +40,9 @@ const UpdateVideo = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const { configWithJWT } = useConfig();
 
+  // File pickers
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-
     if (file) {
       if (file.type.startsWith("video")) {
         const videoUrl = URL.createObjectURL(file);
@@ -68,20 +74,13 @@ const UpdateVideo = () => {
     setIsPrivate(e.target.value);
   };
 
+  // Submit updates
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
 
     const file = fileRef.current?.files?.[0];
     const thumbnail = thumbnailRef.current?.files?.[0];
-    const formData = new FormData();
-
-    if (file) {
-      formData.append("video", file);
-    }
-    if (thumbnail) {
-      formData.append("thumbnail", thumbnail);
-    }
 
     try {
       if (editVideo?._id) {
@@ -102,6 +101,7 @@ const UpdateVideo = () => {
         );
       }
 
+      // Reset local state after success
       setVideoSrc(null);
       setThumbnailSrc(null);
       setTitle("");
@@ -112,7 +112,7 @@ const UpdateVideo = () => {
       if (thumbnailRef.current) thumbnailRef.current.value = "";
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.message || "Something went wrong";
+        error?.response?.data?.message || "Something went wrong";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -132,13 +132,7 @@ const UpdateVideo = () => {
             <label className="text-gray-800 font-semibold">Video</label>
 
             <div className="relative">
-              <div
-                className="
-                  flex items-center justify-between gap-4
-                  rounded-xl border-2 border-dashed border-gray-300
-                  p-4 hover:border-blue-400 transition-colors
-                "
-              >
+              <div className="flex items-center justify-between gap-4 rounded-xl border-2 border-dashed border-gray-300 p-4 hover:border-blue-400 transition-colors">
                 <div>
                   <p className="text-sm font-medium text-gray-800">
                     Drag & drop your video here
@@ -187,13 +181,7 @@ const UpdateVideo = () => {
             </label>
 
             <div className="relative">
-              <div
-                className="
-                  flex items-center justify-between gap-4
-                  rounded-xl border-2 border-dashed border-gray-300
-                  p-4 hover:border-blue-400 transition-colors
-                "
-              >
+              <div className="flex items-center justify-between gap-4 rounded-xl border-2 border-dashed border-gray-300 p-4 hover:border-blue-400 transition-colors">
                 <div>
                   <p className="text-sm font-medium text-gray-800">
                     Drag & drop an image
@@ -280,33 +268,7 @@ const UpdateVideo = () => {
                 disabled={loading}
                 className="bg-blue-600 rounded-md px-6 py-3 text-white text-lg hover:bg-blue-700 duration-300 capitalize w-full sm:w-auto flex items-center justify-center disabled:cursor-not-allowed"
               >
-                {loading ? (
-                  <>
-                    <svg
-                      className="animate-spin mr-2 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v8h8a8 8 0 11-16 0z"
-                      ></path>
-                    </svg>
-                    Updating...
-                  </>
-                ) : (
-                  "Update video"
-                )}
+                {loading ? "Updating..." : "Update video"}
               </button>
             </div>
           </form>

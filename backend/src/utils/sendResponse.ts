@@ -1,8 +1,16 @@
-import {Response} from 'express'
+// Uniform response helper to keep controller code tidy.
+import { Response } from "express";
 
 interface ResponseData {
-    [key:string]:unknown,
+  [key: string]: unknown;
 }
-export const sendResponse = (res:Response,status:number,success:boolean,message:string,data:ResponseData = {}) => {
-    res.status(status).send({success,message,...data})
-}
+
+export const sendResponse = (
+  res: Response,
+  status: number,
+  success: boolean,
+  message: string,
+  data: ResponseData = {}
+) => {
+  res.status(status).send({ success, message, ...data });
+};

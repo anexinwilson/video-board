@@ -1,3 +1,5 @@
+// Auth slice: handles sign up/in, user profile, and local token lifecycle.
+// Thunks talk to backend; state keeps a minimal user object.
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
 import backendApi from "../../api/backendApi";
@@ -42,23 +44,30 @@ const initialState: AuthState = {
   loading: false,
 };
 
+// Sign up then auto sign-in for a smoother first run.
 export const signUpUser = createAsyncThunk<
   void,
   SignUpPayload,
   { rejectValue: string }
->("auth/sign-up-user", async (payload, thunkApi) => {
+>("auth/sign-up-user", async (payload) => {
   try {
     const { email, password, username, navigate } = payload;
     const signUpRes = await backendApi.post<AuthResponse>(
       "/api/v1/auth/sign-up",
       { email, password, username }
     );
+
     if (!signUpRes.data.success) {
       toast.warning(signUpRes.data.message);
       return;
     }
+
     toast.success(signUpRes.data.message);
-    const signInRes = await backendApi.post<AuthResponse>("/api/v1/auth/sign-in", { email, password });
+
+    const signInRes = await backendApi.post<AuthResponse>(
+      "/api/v1/auth/sign-in",
+      { email, password }
+    );
     if (signInRes.data.success && signInRes.data.user?.token) {
       localStorage.setItem("token", signInRes.data.user.token);
       toast.success("Signed in");
@@ -76,6 +85,7 @@ export const signUpUser = createAsyncThunk<
   }
 });
 
+// Email/password sign-in -> store token.
 export const signInUser = createAsyncThunk<
   string | null,
   SignInPayload,
@@ -87,6 +97,7 @@ export const signInUser = createAsyncThunk<
       "/api/v1/auth/sign-in",
       { email, password }
     );
+
     if (data.success && data.user?.token) {
       localStorage.setItem("token", data.user.token);
       toast.success(data.message);
@@ -106,6 +117,7 @@ export const signInUser = createAsyncThunk<
   }
 });
 
+// Get the latest profile for the current token.
 export const fetchUserDetails = createAsyncThunk<
   User | null,
   void,
@@ -113,25 +125,22 @@ export const fetchUserDetails = createAsyncThunk<
 >("auth/fetch-user-details", async (_, thunkApi) => {
   try {
     const token = localStorage.getItem("token");
-    if (!token) {
-      return thunkApi.rejectWithValue("No authorization token found");
-    }
+    if (!token) return thunkApi.rejectWithValue("No authorization token found");
+
     const { data } = await backendApi.get<AuthResponse>(
       "/api/v1/user/profile",
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
-    if (data.success && data.user) {
-      return data.user as any;
-    } else {
-      return thunkApi.rejectWithValue(data.message);
-    }
+
+    if (data.success && data.user) return data.user as any;
+    return thunkApi.rejectWithValue(data.message);
   } catch (error: any) {
     const errorMessage =
-      error?.response?.data?.message || error?.message || "Something went wrong";
+      error?.response?.data?.message ||
+      error?.message ||
+      "Something went wrong";
     return thunkApi.rejectWithValue(errorMessage);
   }
 });
@@ -140,13 +149,18 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
+    // Local logout only; callers handle redirect.
     logOutUser: (state) => {
       localStorage.removeItem("token");
       state.loggedInUser = null;
       toast.info("We will miss you");
     },
+    // Shallow update for username/email after save.
     updateUser: (state, action) => {
-      const { username, email } = action.payload as { username: string; email: string };
+      const { username, email } = action.payload as {
+        username: string;
+        email: string;
+      };
       if (state.loggedInUser) {
         state.loggedInUser.username = username;
         state.loggedInUser.email = email;

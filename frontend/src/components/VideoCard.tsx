@@ -1,4 +1,5 @@
-import React from "react";
+// Single video tile: player + actions + metadata.
+// Keeps edit/delete optional so card can be reused on public pages.
 import { useDispatch, useSelector } from "react-redux";
 import { deleteVideo, setEditVideo, type IVideo } from "../reducers/video/videoReducer";
 import parse from "html-react-parser";
@@ -21,20 +22,27 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
   const navigate = useNavigate();
   const loggedInUser = useSelector(selectLoggedInUser);
 
+  // Copy share URL to clipboard; simple UX.
   const handleShare = () => {
-    const url = `http://localhost:5173/video/${video._id}`;
+    const url = `${import.meta.env.VITE_FRONTEND_URL}/video/${video._id}`;
     navigator.clipboard.writeText(url).then(() => toast.success("Link copied"));
   };
 
+  // Download by fetching the object and creating a blob URL.
   const handleDownload = async () => {
     try {
-      backendApi.post(`/api/v1/video/${video._id}/track-download`, {
-        userId: (loggedInUser as any)?._id,
-      }).catch(() => {});
+      // Best-effort server metric; ignore failures here.
+      backendApi
+        .post(`/api/v1/video/${video._id}/track-download`, {
+          userId: (loggedInUser as any)?._id,
+        })
+        .catch(() => {});
+
       const res = await fetch(video.path, { mode: "cors" });
       if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
+
       const a = document.createElement("a");
       a.href = url;
       a.download = (video.title || "video") + ".mp4";
@@ -47,6 +55,7 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
     }
   };
 
+  // Editing flows rely on global state to prefill the form.
   const handleVideoEdit = () => {
     dispatch(setEditVideo(video));
     navigate("/user/edit/my-video");
@@ -68,6 +77,7 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
 
   return (
     <div className="flex h-full flex-col bg-white">
+      {/* Inline player; keep poster to reduce LCP */}
       <div className="w-full aspect-video overflow-hidden">
         <MuxPlayer
           src={video.path}
@@ -81,29 +91,46 @@ const VideoCard = ({ video, showEdit, configWithJWT }: Props) => {
         />
       </div>
 
+      {/* Quick actions */}
       <div className="flex items-center gap-2 px-2 py-1">
-        <Link to={`/video/${video._id}`} className="text-xs bg-black/70 text-white px-2 py-1 rounded">Open</Link>
-        <button onClick={handleShare} className="text-xs bg-black/70 text-white px-2 py-1 rounded">Share</button>
-        <button onClick={handleDownload} className="flex items-center gap-1 text-xs bg-black/70 text-white px-2 py-1 rounded" title="Download">
+        <Link to={`/video/${video._id}`} className="text-xs bg-black/70 text-white px-2 py-1 rounded">
+          Open
+        </Link>
+        <button onClick={handleShare} className="text-xs bg-black/70 text-white px-2 py-1 rounded">
+          Share
+        </button>
+        <button
+          onClick={handleDownload}
+          className="flex items-center gap-1 text-xs bg-black/70 text-white px-2 py-1 rounded"
+          title="Download"
+        >
           <FaDownload /> Download
         </button>
+
         {showEdit && (
           <>
-            <button onClick={handleVideoEdit} className="text-xs bg-blue-600 text-white px-2 py-1 rounded">Edit</button>
+            <button onClick={handleVideoEdit} className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
+              Edit
+            </button>
             {configWithJWT && (
-              <button onClick={handleDelete} className="text-xs bg-red-600 text-white px-2 py-1 rounded">Delete</button>
+              <button onClick={handleDelete} className="text-xs bg-red-600 text-white px-2 py-1 rounded">
+                Delete
+              </button>
             )}
           </>
         )}
       </div>
 
+      {/* Meta */}
       <div className="px-2 pb-3 mt-auto">
         <h2 className="text-base font-semibold line-clamp-2">{video.title}</h2>
         <div className="text-gray-600 text-xs">
           <div className="line-clamp-2">
             {video?.description ? <>{parse((video.description as string).substring(0, 140))}</> : "default"}
           </div>
-          <p className="text-[11px] text-gray-500 mt-1">by {uploaderName} • {(video as any).viewCount ?? 0} views</p>
+          <p className="text-[11px] text-gray-500 mt-1">
+            by {uploaderName} • {(video as any).viewCount ?? 0} views
+          </p>
         </div>
       </div>
     </div>

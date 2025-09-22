@@ -1,3 +1,5 @@
+// Email/password sign-in.
+// On success, token is stored and we redirect to the dashboard.
 import React, { useState } from "react";
 import Layout from "../../components/Layout";
 import type { AuthFormData } from "../../types";
@@ -9,24 +11,17 @@ import { Link, useNavigate } from "react-router-dom";
 type SignInForm = Pick<AuthFormData, "email" | "password">;
 
 const SignIn = () => {
-  const [formData, setFormData] = useState<SignInForm>({
-    email: "",
-    password: "",
-  });
-
+  const [formData, setFormData] = useState<SignInForm>({ email: "", password: "" });
   const loading = useSelector(selectLoading);
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const { email, password } = formData;
     dispatch(signInUser({ email, password, navigate }));
@@ -35,16 +30,12 @@ const SignIn = () => {
   return (
     <Layout>
       <div className="flex items-center justify-center p-4 w-full">
-        <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-6">
-          <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-            Join Us Today
-          </h1>
+        <div className="w/full max-w-md bg-white rounded-lg shadow-lg p-6">
+          <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Join Us Today</h1>
+
           <form onSubmit={handleSubmit} className="space-y-7">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email
               </label>
               <input
@@ -61,10 +52,7 @@ const SignIn = () => {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
               <input
@@ -83,24 +71,20 @@ const SignIn = () => {
             <button
               disabled={loading}
               type="submit"
-              className="w-full py-3 px-4 bg-sky-400 text-white font-bold rounded-md shadow-md transition duration-300 disabled:bg-green-300 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer "
+              className="w-full py-3 px-4 bg-sky-400 text-white font-bold rounded-md shadow-md transition disabled:bg-green-300 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
             >
               {loading ? "Verifying ..." : "Sign In"}
             </button>
           </form>
+
           <div className="mt-4 text-center">
-            <Link
-              to="/reset-password"
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-            >
+            <Link to="/reset-password" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
               Forgot your password?
             </Link>
           </div>
+
           <div className="mt-4 text-center">
-            <Link
-              to="/sign-up"
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-            >
+            <Link to="/sign-up" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
               Don't have an account? Sign up for free
             </Link>
           </div>

@@ -1,3 +1,5 @@
+// Markdown-first editor built on Lexical.
+// Stores value as Markdown so it can be rendered safely server-side later.
 import React, { useEffect, useMemo, useState } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
@@ -37,14 +39,7 @@ import {
 } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $setBlocksType } from "@lexical/selection";
-import {
-  FaBold,
-  FaItalic,
-  FaUnderline,
-  FaListUl,
-  FaListOl,
-  FaLink,
-} from "react-icons/fa";
+import { FaBold, FaItalic, FaUnderline, FaListUl, FaListOl, FaLink } from "react-icons/fa";
 
 type BlockType = "paragraph" | "h1" | "h2" | "quote" | "code";
 
@@ -63,7 +58,7 @@ const TextEditor: React.FC<Props> = ({
   setTitle,
   hideTitle = true,
 }) => {
-  // Initialize Lexical: map nodes to class names; keep editor value in Markdown.
+  // Editor config: map nodes we allow and convert initial MD to editor state.
   const initialConfig = useMemo(
     () => ({
       namespace: "MarkdownEditor",
@@ -95,6 +90,7 @@ const TextEditor: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col bg-white p-0 rounded-xl shadow-md">
+      {/* Optional title input controlled outside this component */}
       {!hideTitle && setTitle && (
         <input
           type="text"
@@ -111,7 +107,7 @@ const TextEditor: React.FC<Props> = ({
           <ListPlugin />
           <LinkPlugin />
 
-          {/* Styles for headings/quote/code live in index.css under .editor-content */}
+          {/* Main editable area */}
           <div className="relative p-2 min-h-[140px] editor-content">
             <RichTextPlugin
               contentEditable={<ContentEditable className="outline-none w-full px-2 py-1" />}
@@ -126,7 +122,7 @@ const TextEditor: React.FC<Props> = ({
             <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
             <HistoryPlugin />
 
-            {/* Persist to Markdown so callers can store plain text */}
+            {/* Persist editor state as Markdown on each change */}
             <OnChangePlugin
               onChange={(editorState: EditorState) => {
                 editorState.read(() => {
@@ -146,7 +142,7 @@ function Toolbar() {
   const [formats, setFormats] = useState({ bold: false, italic: false, underline: false });
   const [blockType, setBlockType] = useState<BlockType>("paragraph");
 
-  // Mirror current selection into toolbar state (bold/italic/underline + block type)
+  // Keep toolbar buttons in sync with current selection.
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
@@ -166,7 +162,7 @@ function Toolbar() {
           return;
         }
         if ($isHeadingNode(top)) {
-          // @ts-ignore getTag exists on heading nodes
+          // @ts-ignore Lexical node has getTag in runtime
           const tag = top.getTag?.();
           if (tag === "h1" || tag === "h2") {
             setBlockType(tag);
@@ -186,7 +182,7 @@ function Toolbar() {
     });
   }, [editor]);
 
-  // Apply selected block type to the current selection.
+  // Apply a specific block type to the selection.
   const applyBlockType = (type: BlockType) => {
     editor.update(() => {
       const sel = $getSelection();
@@ -213,6 +209,7 @@ function Toolbar() {
     });
   };
 
+  // Simple prompt for link insertion; keeps UI minimal.
   const promptForLink = () => {
     const url = window.prompt("Enter URL");
     if (url === null) return;
@@ -263,6 +260,7 @@ function Toolbar() {
   );
 }
 
+// Small helper for toolbar buttons.
 function Btn({
   active,
   title,

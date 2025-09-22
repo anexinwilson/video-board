@@ -1,3 +1,5 @@
+// New upload flow.
+// Validates presence of a video file; thumbnail is optional.
 import React, { useRef, useState } from "react";
 import SideBar from "../../components/SideBar";
 import { toast } from "sonner";
@@ -9,17 +11,20 @@ const Upload = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const thumbnailRef = useRef<HTMLInputElement>(null);
 
+  // Previews and filenames for UX
   const [videoSrc, setVideoSrc] = useState<string | null>("");
   const [thumbnailSrc, setThumbnailSrc] = useState<string | null>("");
   const [videoName, setVideoName] = useState<string>("");
   const [thumbName, setThumbName] = useState<string>("");
 
+  // Form state
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [isPrivate, setIsPrivate] = useState<"false" | "true">("false");
   const [loading, setLoading] = useState<boolean>(false);
   const { configWithJWT } = useConfig();
 
+  // File pickers
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -50,6 +55,7 @@ const Upload = () => {
     setIsPrivate(e.target.value as "false" | "true");
   };
 
+  // Send multipart/form-data to backend
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const file = fileRef.current?.files?.[0];
@@ -69,20 +75,15 @@ const Upload = () => {
       formData.append("isPrivate", isPrivate);
       if (thumbnail) formData.append("thumbnail", thumbnail);
 
-      const { data } = await backendApi.post(
-        "/api/v1/aws/videos",
-        formData,
-        {
-          ...configWithJWT,
-          headers: {
-            ...configWithJWT.headers,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const { data } = await backendApi.post("/api/v1/videos", formData, {
+        ...configWithJWT,
+        headers: { ...configWithJWT.headers, "Content-Type": "multipart/form-data" },
+      });
 
       if (data.success) {
         toast.success(data.message);
+
+        // Clear local state + file inputs
         setTitle("");
         setDescription("");
         setIsPrivate("false");
@@ -95,7 +96,7 @@ const Upload = () => {
       } else {
         toast.warning(data.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setLoading(false);
@@ -107,31 +108,17 @@ const Upload = () => {
       <SideBar />
       <main className="flex-1 p-4 mt-7 lg:ml-64 overflow-y-auto">
         <section className="flex flex-col items-center">
-          <form
-            className="w-full max-w-6xl flex flex-col gap-4 p-6 bg-white shadow-lg rounded-lg"
-            onSubmit={handleSubmit}
-          >
+          <form className="w-full max-w-6xl flex flex-col gap-4 p-6 bg-white shadow-lg rounded-lg" onSubmit={handleSubmit}>
             {/* Video Upload */}
             <label className="text-gray-800 font-semibold">Video</label>
 
             <div className="relative">
-              <div
-                className="
-                  flex items-center justify-between gap-4
-                  rounded-xl border-2 border-dashed border-gray-300
-                  p-4 hover:border-blue-400 transition-colors
-                "
-              >
+              <div className="flex items-center justify-between gap-4 rounded-xl border-2 border-dashed border-gray-300 p-4 hover:border-blue-400 transition-colors">
                 <div>
-                  <p className="text-sm font-medium text-gray-800">
-                    Drag & drop your video here
-                  </p>
+                  <p className="text-sm font-medium text-gray-800">Drag & drop your video here</p>
                   <p className="text-xs text-gray-500">Supports MP4 and WebM</p>
                 </div>
-                <button
-                  type="button"
-                  className="px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                >
+                <button type="button" className="px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">
                   Choose file
                 </button>
               </div>
@@ -147,46 +134,25 @@ const Upload = () => {
             </div>
 
             <div className="text-sm">
-              {videoName ? (
-                <span className="text-gray-700">{videoName}</span>
-              ) : (
-                <span className="text-gray-400 italic">No file chosen</span>
-              )}
+              {videoName ? <span className="text-gray-700">{videoName}</span> : <span className="text-gray-400 italic">No file chosen</span>}
             </div>
 
             {videoSrc && (
               <div className="mt-2 flex flex-col items-center">
-                <video
-                  src={videoSrc || undefined}
-                  controls
-                  className="w-40 h-40 object-cover rounded-md shadow-md"
-                />
+                <video src={videoSrc || undefined} controls className="w-40 h-40 object-cover rounded-md shadow-md" />
               </div>
             )}
 
             {/* Thumbnail Upload */}
-            <label className="text-gray-800 font-semibold">
-              Thumbnail (Optional)
-            </label>
+            <label className="text-gray-800 font-semibold">Thumbnail (Optional)</label>
 
             <div className="relative">
-              <div
-                className="
-                  flex items-center justify-between gap-4
-                  rounded-xl border-2 border-dashed border-gray-300
-                  p-4 hover:border-blue-400 transition-colors
-                "
-              >
+              <div className="flex items-center justify-between gap-4 rounded-xl border-2 border-dashed border-gray-300 p-4 hover:border-blue-400 transition-colors">
                 <div>
-                  <p className="text-sm font-medium text-gray-800">
-                    Drag & drop an image
-                  </p>
+                  <p className="text-sm font-medium text-gray-800">Drag & drop an image</p>
                   <p className="text-xs text-gray-500">PNG, JPG, WebP</p>
                 </div>
-                <button
-                  type="button"
-                  className="px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                >
+                <button type="button" className="px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">
                   Choose file
                 </button>
               </div>
@@ -202,20 +168,12 @@ const Upload = () => {
             </div>
 
             <div className="text-sm">
-              {thumbName ? (
-                <span className="text-gray-700">{thumbName}</span>
-              ) : (
-                <span className="text-gray-400 italic">No file chosen</span>
-              )}
+              {thumbName ? <span className="text-gray-700">{thumbName}</span> : <span className="text-gray-400 italic">No file chosen</span>}
             </div>
 
             {thumbnailSrc && (
               <div className="mt-2 flex flex-col items-center">
-                <img
-                  src={thumbnailSrc || undefined}
-                  alt="Thumbnail Preview"
-                  className="w-40 h-40 object-cover rounded-md shadow-md"
-                />
+                <img src={thumbnailSrc || undefined} alt="Thumbnail Preview" className="w-40 h-40 object-cover rounded-md shadow-md" />
               </div>
             )}
 
@@ -234,13 +192,7 @@ const Upload = () => {
 
             {/* Description */}
             <label className="text-gray-800 font-semibold">Description</label>
-            <TextEditor
-              title={title}
-              setTitle={setTitle}
-              content={description}
-              setContent={setDescription}
-              hideTitle={true}
-            />
+            <TextEditor title={title} setTitle={setTitle} content={description} setContent={setDescription} hideTitle={true} />
 
             {/* Privacy */}
             <label htmlFor="privacy" className="text-gray-800 font-semibold">
@@ -263,33 +215,7 @@ const Upload = () => {
                 disabled={loading}
                 className="bg-blue-600 rounded-md px-6 py-3 text-white text-lg hover:bg-blue-700 duration-300 capitalize w-full sm:w-auto flex items-center justify-center disabled:cursor-not-allowed"
               >
-                {loading ? (
-                  <>
-                    <svg
-                      className="animate-spin mr-2 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v8h8a8 8 0 11-16 0z"
-                      ></path>
-                    </svg>
-                    Uploading...
-                  </>
-                ) : (
-                  "Upload video"
-                )}
+                {loading ? "Uploading..." : "Upload video"}
               </button>
             </div>
           </form>
