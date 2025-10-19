@@ -180,7 +180,7 @@ resource "aws_instance" "jenkins_server" {
     # Install Docker CLI inside Jenkins container
     docker exec -u root jenkins sh -c "apt-get update && apt-get install -y docker.io"
     
-    # Save initial admin password
+    # Save initial admin password to ec2
     sleep 30
     docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword > /home/ec2-user/jenkins_initial_password.txt 2>/dev/null || true
     chown ec2-user:ec2-user /home/ec2-user/jenkins_initial_password.txt 2>/dev/null || true
