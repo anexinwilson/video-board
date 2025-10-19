@@ -3,9 +3,9 @@ pipeline {
     
     environment {
         AWS_REGION = 'us-east-2'
-        LAMBDA_AUTH = 'auth-service'
-        LAMBDA_USER = 'user-service'
-        LAMBDA_VIDEO = 'video-service'
+        LAMBDA_AUTH = 'videoboard-auth'
+        LAMBDA_USER = 'videoboard-user'
+        LAMBDA_VIDEO = 'videoboard-video'
     }
     
     stages {
