@@ -3,6 +3,13 @@ pipeline {
     
     environment {
         AWS_REGION = 'us-east-2'
+        
+        // ECR Repository names 
+        ECR_AUTH = 'videoboard-auth'
+        ECR_USER = 'videoboard-user'
+        ECR_VIDEO = 'videoboard-video'
+        
+        // Lambda Function names 
         LAMBDA_AUTH = 'myVideoBoardAuth'
         LAMBDA_USER = 'videoboard-user'
         LAMBDA_VIDEO = 'videoboard-video'
@@ -77,8 +84,8 @@ pipeline {
                             docker buildx build \
                                 --platform linux/amd64 \
                                 -f backend/src/lambda/auth/Dockerfile \
-                                -t ${ECR_REGISTRY}/${LAMBDA_AUTH}:latest \
-                                -t ${ECR_REGISTRY}/${LAMBDA_AUTH}:build-${BUILD_NUMBER} \
+                                -t ${ECR_REGISTRY}/${ECR_AUTH}:latest \
+                                -t ${ECR_REGISTRY}/${ECR_AUTH}:build-${BUILD_NUMBER} \
                                 backend \
                                 --push \
                                 --provenance=false \
@@ -90,8 +97,8 @@ pipeline {
                             docker buildx build \
                                 --platform linux/amd64 \
                                 -f backend/src/lambda/user/Dockerfile \
-                                -t ${ECR_REGISTRY}/${LAMBDA_USER}:latest \
-                                -t ${ECR_REGISTRY}/${LAMBDA_USER}:build-${BUILD_NUMBER} \
+                                -t ${ECR_REGISTRY}/${ECR_USER}:latest \
+                                -t ${ECR_REGISTRY}/${ECR_USER}:build-${BUILD_NUMBER} \
                                 backend \
                                 --push \
                                 --provenance=false \
@@ -103,8 +110,8 @@ pipeline {
                             docker buildx build \
                                 --platform linux/amd64 \
                                 -f backend/src/lambda/video/Dockerfile \
-                                -t ${ECR_REGISTRY}/${LAMBDA_VIDEO}:latest \
-                                -t ${ECR_REGISTRY}/${LAMBDA_VIDEO}:build-${BUILD_NUMBER} \
+                                -t ${ECR_REGISTRY}/${ECR_VIDEO}:latest \
+                                -t ${ECR_REGISTRY}/${ECR_VIDEO}:build-${BUILD_NUMBER} \
                                 backend \
                                 --push \
                                 --provenance=false \
@@ -128,21 +135,21 @@ pipeline {
                         sh """
                             aws lambda update-function-code \
                                 --function-name ${LAMBDA_AUTH} \
-                                --image-uri ${ECR_REGISTRY}/${LAMBDA_AUTH}:latest \
+                                --image-uri ${ECR_REGISTRY}/${ECR_AUTH}:latest \
                                 --region ${AWS_REGION}
                         """
                         
                         sh """
                             aws lambda update-function-code \
                                 --function-name ${LAMBDA_USER} \
-                                --image-uri ${ECR_REGISTRY}/${LAMBDA_USER}:latest \
+                                --image-uri ${ECR_REGISTRY}/${ECR_USER}:latest \
                                 --region ${AWS_REGION}
                         """
                         
                         sh """
                             aws lambda update-function-code \
                                 --function-name ${LAMBDA_VIDEO} \
-                                --image-uri ${ECR_REGISTRY}/${LAMBDA_VIDEO}:latest \
+                                --image-uri ${ECR_REGISTRY}/${ECR_VIDEO}:latest \
                                 --region ${AWS_REGION}
                         """
                         
