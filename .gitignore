@@ -6,4 +6,4 @@ frontend/.env
 *.tfstate.backup
 *.terraform.lock.hcl
 *jenkins-key.pub
-jenkins-key
+*jenkins-key
