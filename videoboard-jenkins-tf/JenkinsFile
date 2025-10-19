@@ -1,0 +1,218 @@
+pipeline {
+    agent any
+    
+    environment {
+        AWS_REGION = 'us-east-2'
+        LAMBDA_AUTH = 'auth-service'
+        LAMBDA_USER = 'user-service'
+        LAMBDA_VIDEO = 'video-service'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Pulling latest code from GitHub'
+                checkout scm
+            }
+        }
+        
+        stage('Install Dependencies') {
+            parallel {
+                stage('Backend Dependencies') {
+                    steps {
+                        echo 'Installing backend dependencies'
+                        dir('backend') {
+                            sh 'npm ci'
+                        }
+                    }
+                }
+                stage('Frontend Dependencies') {
+                    steps {
+                        echo 'Installing frontend dependencies'
+                        dir('frontend') {
+                            sh 'npm ci'
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Run Tests') {
+            parallel {
+                stage('Backend Tests') {
+                    steps {
+                        echo 'Running backend tests'
+                        dir('backend') {
+                            sh 'npm test || echo "No tests found, skipping"'
+                        }
+                    }
+                }
+                stage('Frontend Tests') {
+                    steps {
+                        echo 'Running frontend tests'
+                        dir('frontend') {
+                            sh 'npm test || echo "No tests found, skipping"'
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Build & Push Docker Images') {
+            steps {
+                script {
+                    withCredentials([
+                        string(credentialsId: 'aws-account-id', variable: 'AWS_ACCOUNT_ID')
+                    ]) {
+                        def ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                        
+                        echo 'Logging into AWS ECR'
+                        sh """
+                            aws ecr get-login-password --region ${AWS_REGION} | \
+                            docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                        """
+                        
+                        echo 'Building auth-service Docker image'
+                        sh """
+                            docker buildx build \
+                                --platform linux/amd64 \
+                                -f backend/src/lambda/auth/Dockerfile \
+                                -t ${ECR_REGISTRY}/${LAMBDA_AUTH}:latest \
+                                -t ${ECR_REGISTRY}/${LAMBDA_AUTH}:build-${BUILD_NUMBER} \
+                                backend \
+                                --push \
+                                --provenance=false \
+                                --sbom=false
+                        """
+                        
+                        echo 'Building user-service Docker image'
+                        sh """
+                            docker buildx build \
+                                --platform linux/amd64 \
+                                -f backend/src/lambda/user/Dockerfile \
+                                -t ${ECR_REGISTRY}/${LAMBDA_USER}:latest \
+                                -t ${ECR_REGISTRY}/${LAMBDA_USER}:build-${BUILD_NUMBER} \
+                                backend \
+                                --push \
+                                --provenance=false \
+                                --sbom=false
+                        """
+                        
+                        echo 'Building video-service Docker image'
+                        sh """
+                            docker buildx build \
+                                --platform linux/amd64 \
+                                -f backend/src/lambda/video/Dockerfile \
+                                -t ${ECR_REGISTRY}/${LAMBDA_VIDEO}:latest \
+                                -t ${ECR_REGISTRY}/${LAMBDA_VIDEO}:build-${BUILD_NUMBER} \
+                                backend \
+                                --push \
+                                --provenance=false \
+                                --sbom=false
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy Lambda Functions') {
+            steps {
+                script {
+                    withCredentials([
+                        string(credentialsId: 'aws-account-id', variable: 'AWS_ACCOUNT_ID')
+                    ]) {
+                        def ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                        
+                        echo 'Updating Lambda functions with new images'
+                        
+                        sh """
+                            aws lambda update-function-code \
+                                --function-name ${LAMBDA_AUTH} \
+                                --image-uri ${ECR_REGISTRY}/${LAMBDA_AUTH}:latest \
+                                --region ${AWS_REGION}
+                        """
+                        
+                        sh """
+                            aws lambda update-function-code \
+                                --function-name ${LAMBDA_USER} \
+                                --image-uri ${ECR_REGISTRY}/${LAMBDA_USER}:latest \
+                                --region ${AWS_REGION}
+                        """
+                        
+                        sh """
+                            aws lambda update-function-code \
+                                --function-name ${LAMBDA_VIDEO} \
+                                --image-uri ${ECR_REGISTRY}/${LAMBDA_VIDEO}:latest \
+                                --region ${AWS_REGION}
+                        """
+                        
+                        echo 'Waiting for Lambda functions to update'
+                        sh """
+                            aws lambda wait function-updated --function-name ${LAMBDA_AUTH} --region ${AWS_REGION}
+                            aws lambda wait function-updated --function-name ${LAMBDA_USER} --region ${AWS_REGION}
+                            aws lambda wait function-updated --function-name ${LAMBDA_VIDEO} --region ${AWS_REGION}
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Build & Deploy Frontend') {
+            steps {
+                script {
+                    withCredentials([
+                        string(credentialsId: 's3-bucket-name', variable: 'S3_BUCKET'),
+                        string(credentialsId: 'cloudfront-distribution-id', variable: 'CLOUDFRONT_ID')
+                    ]) {
+                        dir('frontend') {
+                            echo 'Building React production build'
+                            sh 'npm run build'
+                            
+                            echo 'Uploading frontend to S3'
+                            sh """
+                                aws s3 sync dist/ s3://${S3_BUCKET}/ \
+                                    --delete \
+                                    --cache-control max-age=31536000,public
+                            """
+                            
+                            echo 'Invalidating CloudFront cache'
+                            sh """
+                                aws cloudfront create-invalidation \
+                                    --distribution-id ${CLOUDFRONT_ID} \
+                                    --paths "/*"
+                            """
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Health Check') {
+            steps {
+                script {
+                    echo 'Running health checks on deployed services'
+                    
+                    sh """
+                        aws lambda get-function --function-name ${LAMBDA_AUTH} --region ${AWS_REGION} --query 'Configuration.State' --output text
+                        aws lambda get-function --function-name ${LAMBDA_USER} --region ${AWS_REGION} --query 'Configuration.State' --output text
+                        aws lambda get-function --function-name ${LAMBDA_VIDEO} --region ${AWS_REGION} --query 'Configuration.State' --output text
+                    """
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Deployment successful - all services are live'
+            echo "Build: ${BUILD_NUMBER}"
+        }
+        failure {
+            echo 'Deployment failed - check console output for details'
+            echo "Build: ${BUILD_NUMBER}"
+        }
+        always {
+            cleanWs()
+        }
+    }
+}

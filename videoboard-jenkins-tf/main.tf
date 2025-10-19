@@ -1,74 +1,103 @@
 terraform {
-  required_version = ">= 1.5.0"
-
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    http = {
-      source  = "hashicorp/http"
-      version = "~> 3.0"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.6"
-    }
+  }
+
+  backend "s3" {
+    bucket = "jenkins-videoboard-bucket"
+    key    = "terraform/state.tfstate"
+    region = "us-east-2"
   }
 }
 
-# --- Providers ---
 provider "aws" {
-  region = var.region
+  region = var.aws_region
 }
 
-provider "http" {}
+# SSH Key Pair
+resource "aws_key_pair" "jenkins_key" {
+  key_name   = "jenkins-videoboard-key"
+  public_key = file("${path.module}/jenkins-key.pub")
 
-# --- Use default VPC and subnets ---
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
+  tags = {
+    Name = "jenkins-videoboard-key"
   }
 }
 
-# --- Get your public IP (for SSH/Jenkins access lockdown) ---
-data "http" "my_ip" {
-  url = "https://checkip.amazonaws.com/"
+# VPC
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+
+  tags = {
+    Name = "jenkins-videoboard-vpc"
+  }
 }
 
-# --- Security Group for Jenkins ---
+# Public Subnet
+resource "aws_subnet" "public_subnet" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  map_public_ip_on_launch = true
+  availability_zone       = "${var.aws_region}a"
+
+  tags = {
+    Name = "jenkins-public-subnet"
+  }
+}
+
+# Internet Gateway
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.main.id
+  
+  tags = {
+    Name = "jenkins-igw"
+  }
+}
+
+# Route Table
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.gw.id
+  }
+
+  tags = {
+    Name = "jenkins-public-rt"
+  }
+}
+
+# Route Table Association
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public_subnet.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+# Security Group
 resource "aws_security_group" "jenkins_sg" {
-  name        = "jenkins-sg"
-  description = "Allow Jenkins UI (8080), SSH (22) from my IP, and agent port 50000"
-  vpc_id      = data.aws_vpc.default.id
+  name        = "jenkins-videoboard-sg"
+  description = "Security group for Jenkins server"
+  vpc_id      = aws_vpc.main.id
 
   ingress {
-    description = "Jenkins UI"
+    description = "Jenkins Web UI"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = ["${trimspace(data.http.my_ip.response_body)}/32"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    description = "SSH access"
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${trimspace(data.http.my_ip.response_body)}/32"]
-  }
-
-  ingress {
-    description = "JNLP agents inside VPC"
-    from_port   = 50000
-    to_port     = 50000
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.default.cidr_block]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -79,103 +108,83 @@ resource "aws_security_group" "jenkins_sg" {
   }
 
   tags = {
-    Name = "jenkins-sg"
+    Name = "jenkins-videoboard-sg"
   }
 }
 
-# --- IAM Role trust (EC2) ---
-data "aws_iam_policy_document" "controller_trust" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-  }
-}
-
-# --- IAM Role for Jenkins controller ---
-resource "aws_iam_role" "controller_role" {
-  name               = "jenkins-controller-role"
-  assume_role_policy = data.aws_iam_policy_document.controller_trust.json
-}
-
-# --- IAM Policy allowing EC2 management (for Spot agents later) ---
-data "aws_iam_policy_document" "controller_policy" {
-  statement {
-    actions = [
-      "ec2:Describe*",
-      "ec2:RunInstances",
-      "ec2:TerminateInstances",
-      "ec2:CreateTags",
-      "ec2:RequestSpotInstances",
-      "ec2:CancelSpotInstanceRequests",
-      "ec2:CreateFleet",
-      "ec2:DeleteFleet"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions   = ["iam:PassRole"]
-    resources = ["*"]
-  }
-}
-
-resource "aws_iam_policy" "controller_policy_resource" {
-  name   = "jenkins-controller-ec2"
-  policy = data.aws_iam_policy_document.controller_policy.json
-}
-
-resource "aws_iam_role_policy_attachment" "attach_controller_policy" {
-  role       = aws_iam_role.controller_role.name
-  policy_arn = aws_iam_policy.controller_policy_resource.arn
-}
-
-# --- Instance profile for EC2 ---
-resource "aws_iam_instance_profile" "controller_profile" {
-  name = "jenkins-controller-instance-profile"
-  role = aws_iam_role.controller_role.name
-}
-
-# --- Get the latest Amazon Linux 2023 AMI (x86_64) ---
-data "aws_ami" "al2023" {
+# AMI Lookup - Amazon Linux 2023
+data "aws_ami" "amazon_linux_2023" {
   most_recent = true
-  owners      = ["137112412989"] # Amazon official
+  owners      = ["amazon"]
+
   filter {
     name   = "name"
-    values = ["al2023-ami-*-x86_64"]
+    values = ["al2023-ami-*"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
   }
 }
 
-# --- Random index to avoid subnets in unsupported AZs ---
-resource "random_integer" "az_index" {
-  min = 0
-  max = length(data.aws_subnets.default.ids) - 1
-}
-
-# --- EC2 instance (Jenkins controller) ---
-resource "aws_instance" "controller" {
-  ami                         = data.aws_ami.al2023.id
-  instance_type               = var.controller_instance_type
-  iam_instance_profile        = aws_iam_instance_profile.controller_profile.name
+# EC2 Instance
+resource "aws_instance" "jenkins_server" {
+  ami                         = data.aws_ami.amazon_linux_2023.id
+  instance_type               = var.instance_type
+  subnet_id                   = aws_subnet.public_subnet.id
   vpc_security_group_ids      = [aws_security_group.jenkins_sg.id]
+  iam_instance_profile        = aws_iam_instance_profile.jenkins_profile.name
   associate_public_ip_address = true
-
-  # Pick a random default subnet to avoid an AZ that doesn't support this instance type
-  subnet_id = element(data.aws_subnets.default.ids, random_integer.az_index.result)
-
-  user_data = file("${path.module}/user_data_controller.sh")
+  key_name                    = aws_key_pair.jenkins_key.key_name
 
   root_block_device {
-    volume_type = "gp3"
     volume_size = 30
-    iops        = 3000
-    throughput  = 125
+    volume_type = "gp3"
   }
 
   tags = {
-    Name = "jenkins-controller"
-    Role = "jenkins-controller"
+    Name = "jenkins-server"
   }
+
+  user_data = <<-EOF
+    #!/bin/bash
+    set -e
+    
+    yum update -y
+    
+    # Install Docker
+    yum install -y docker
+    systemctl enable --now docker
+    
+    # Install SSM Agent
+    yum install -y amazon-ssm-agent
+    systemctl enable --now amazon-ssm-agent
+    
+    usermod -aG docker ec2-user
+    
+    # Create Jenkins home directory
+    mkdir -p /home/ec2-user/jenkins_home
+    chown -R ec2-user:ec2-user /home/ec2-user/jenkins_home
+    
+    # Run Jenkins with Docker-in-Docker support
+    docker run -d --name jenkins \
+      -p 8080:8080 -p 50000:50000 \
+      -v /home/ec2-user/jenkins_home:/var/jenkins_home \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      -v $(which docker):/usr/bin/docker \
+      --group-add $(getent group docker | cut -d: -f3) \
+      --user root \
+      jenkins/jenkins:lts
+    
+    # Install Docker CLI inside Jenkins container
+    docker exec -u root jenkins sh -c "apt-get update && apt-get install -y docker.io"
+    
+    # Save initial admin password
+    sleep 30
+    docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword > /home/ec2-user/jenkins_initial_password.txt 2>/dev/null || true
+    chown ec2-user:ec2-user /home/ec2-user/jenkins_initial_password.txt 2>/dev/null || true
+  EOF
+
+  depends_on = [aws_internet_gateway.gw]
 }

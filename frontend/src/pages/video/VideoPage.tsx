@@ -79,7 +79,7 @@ function VideoPage() {
     }
   };
 
-  if (loading) return <p className="text-lg text-center">Loading...</p>;
+  if (loading) return <p className="text-lg text-center">Loading....</p>;
   if (!video)
     return (
       <Layout>

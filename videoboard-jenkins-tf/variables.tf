@@ -1,11 +1,11 @@
-variable "region" {
-  description = "AWS region"
+variable "aws_region" {
+  description = "AWS region for resources"
   type        = string
-  default     = "us-east-2" # Ohio (you said you're using us-east-2)
+  default     = "us-east-2"
 }
 
-variable "controller_instance_type" {
-  description = "EC2 instance type for Jenkins controller"
+variable "instance_type" {
+  description = "EC2 instance type"
   type        = string
-  default     = "t3.micro" # If this errors, switch to t2.micro or t4g.micro (ARM)
+  default     = "t3.micro"
 }

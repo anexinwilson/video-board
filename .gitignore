@@ -1,4 +1,9 @@
 node_modules
 backend/.env
 frontend/.env
-videoboard-jenkins-tf/.terraform/
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.terraform.lock.hcl
+*jenkins-key.pub
+jenkins-key
