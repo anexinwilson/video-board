@@ -38,11 +38,14 @@ resource "aws_iam_role_policy" "jenkins_deployment" {
         Action = [
           "s3:GetObject",
           "s3:PutObject",
+          "s3:DeleteObject",
           "s3:ListBucket"
         ]
         Resource = [
           "arn:aws:s3:::jenkins-videoboard-bucket",
-          "arn:aws:s3:::jenkins-videoboard-bucket/*"
+          "arn:aws:s3:::jenkins-videoboard-bucket/*",
+          "arn:aws:s3:::videoboardfrontend",
+          "arn:aws:s3:::videoboardfrontend/*"
         ]
       },
       {
@@ -64,9 +67,17 @@ resource "aws_iam_role_policy" "jenkins_deployment" {
         Action = [
           "lambda:UpdateFunctionCode",
           "lambda:GetFunction",
+          "lambda:GetFunctionConfiguration",
           "lambda:CreateFunction"
         ]
         Resource = "arn:aws:lambda:${var.aws_region}:*:function:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudfront:CreateInvalidation"
+        ]
+        Resource = "*"
       }
     ]
   })
